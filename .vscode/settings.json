@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "fuse_misc.h": "c",
+        "assert.h": "c",
+        "fcntl.h": "c",
+        "stdio.h": "c",
+        "fuse.h": "c"
+    }
+}
