@@ -76,3 +76,7 @@ static const struct fuse_opt option_spec[] = {
 	OPTION("--help", show_help),
 	FUSE_OPT_END
 };
+
+int fuse_study_unlink(const char *path);
+int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
+int fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
