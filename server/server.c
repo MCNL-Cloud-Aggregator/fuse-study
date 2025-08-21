@@ -328,7 +328,8 @@ int fuse_study_mkdir(int sock, char *path)
 	printf("mode: %hu\n", mode);
 	printf("path: %s\n", path);
 
-	bound_send(sock,&send_buf,&res,sizeof(int));
+	bound_send(sock, &send_buf, &res, sizeof(int));
+	printf("mkdir result2: %d\n", res);
 	if (res == 0) {
         struct stat st;
         if (stat(path, &st) == 0) {
