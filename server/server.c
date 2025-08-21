@@ -283,11 +283,6 @@ int fuse_study_create(char *path){
     }
     close(fd);
 
-    if (utime(path, NULL) < 0) {
-        perror("utime");
-        return -1;
-    }
-
     return 0;
 }
 
