@@ -7,18 +7,27 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <sys/epoll.h>
+#include "bound.h"
 
 #define EPOLL_SIZE 96
 #define BUFSIZE 512
+#define DEFAULT_PATH "/"
+#define PORT 9000
 
 struct thread_arg {
 	unsigned short opcode;
+	char* path;
 	int client_sock;
+	int epfd;
+	struct epoll_event event;
 };
 
 void* thread_handler(void* arg) {
 	int client_sock = ((struct thread_arg*) arg)->client_sock;
 	unsigned short opcode = ((struct thread_arg*) arg)->opcode;
+	int epfd = ((struct thread_arg*) arg)->epfd;
+	struct epoll_event event = ((struct thread_arg*) arg)->event;
+	char* path = ((struct thread_arg*) arg)->path;
 	
 	switch(opcode) {
 		case 0x00 : break;
@@ -34,6 +43,16 @@ void* thread_handler(void* arg) {
 		default : break;
 	}
 	
+	// epoll list에 client socket 다시 등록
+	epoll_ctl(epfd, EPOLL_CTL_ADD, client_sock, &event);
+	
+	// path 메모리 반환
+	free(path);
+	
+	//todo: 다시 epoll list에 클라이언트 소켓을 추가
+	/*
+		goto를 사용하든 조건문을 통해서 그냥 return 하든 client가 연결을 끊었을 때는 그냥 return, 그렇지않으면 epoll list에 client socket을 추가하고 return
+	*/
 	return NULL;
 }
 
@@ -41,7 +60,7 @@ int main() {
 	int server_sock, client_sock;
 	struct sockaddr_in server_addr, client_addr;
 	socklen_t client_addr_size = sizeof(client_addr);
-
+	
 	int epfd, event_count;
 	struct epoll_event *epoll_events;
 	struct epoll_event event;
@@ -56,8 +75,8 @@ int main() {
 	// server_sock 세팅
 	memset(&server_addr, 0, sizeof(server_addr));
 	server_addr.sin_family = AF_INET;
-	server_addr.sin_addr.s_addr = inet_addr("192.168.64.16");
-	server_addr.sin_port = htons(24682);
+	server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
+	server_addr.sin_port = htons(PORT);
 	
 	// client_sock 세팅
 	memset(&client_addr, 0, sizeof(client_addr));
@@ -77,7 +96,7 @@ int main() {
 		exit(-1);
 	}
 	
-	// epoll 생성
+	// epoll_list 생성
 	epfd = epoll_create(EPOLL_SIZE);
 	epoll_events = malloc(sizeof(struct epoll_event) * EPOLL_SIZE);
 	
@@ -112,12 +131,48 @@ int main() {
 			}
 			else {
 				struct thread_arg thread_arg;
+				struct pkt pkt;
+				int read_byte;
 				
-				// client_sock 저장
+				// opcode 수신 및 thread_arg에 opcode 저장
+				read_byte = bound_read(epoll_events[i].data.fd, &pkt);
+				
+				// client가 connection을 종료했을 경우
+				if (read_byte == 0) {
+					close(client_sock);
+					epoll_ctl(epfd, EPOLL_CTL_DEL, client_sock, &event);
+					continue;
+				}
+				
+				memcpy(&thread_arg.opcode, pkt.buf, pkt.size);
+				
+				// path 크기 수신
+				size_t path_len;
+				bound_read(epoll_events[i].data.fd, &pkt);
+				
+				memcpy(&path_len, pkt.buf, pkt.size);
+				printf("path_len : %ld\n", path_len);
+				
+				// path 수신 및 thread_arg에 path 저장
+				char* path = malloc(path_len);
+				size_t received_byte = 0;
+				do {
+					bound_read(epoll_events[i].data.fd, &pkt);
+					strncpy(&path[received_byte], pkt.buf, pkt.size);
+					received_byte += pkt.size;
+					if (pkt.end == 1) {
+						break;
+					}
+				} while (true);
+				thread_arg.path = path;
+				
+				// thread_arg에 client_sock, epfd, event 저장
 				thread_arg.client_sock = epoll_events[i].data.fd;
+				thread_arg.epfd = epfd;
+				thread_arg.event = epoll_events[i];
 				
-				// opcode 수신
-				read(epoll_events[i].data.fd, &thread_arg.opcode, sizeof(thread_arg.opcode));
+				// thread 생성 전에 epoll list에서 sock 제거
+				epoll_ctl(epfd, EPOLL_CTL_DEL, client_sock, &event);
 				
 				// pthread_create()
 				if (pthread_create(&thread_id, NULL, thread_handler, (void*) &thread_arg) != 0) {
