@@ -480,9 +480,9 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
 
 
     int result = 0;
-    read(serv_sd, &result, sizeof(int));
-    //bound_read(serv_sd, &recv_buf);
-    //memcpy(&result, recv_buf.buf, sizeof(int));
+    //read(serv_sd, &result, sizeof(int));
+    bound_read(serv_sd, &recv_buf);
+    memcpy(&result, recv_buf.buf, sizeof(int));
 
     printf("mkdir result: %d\n", result);
     
