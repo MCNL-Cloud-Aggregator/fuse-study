@@ -318,14 +318,17 @@ int fuse_study_mkdir(int sock, char *path)
 {
 	int res;
     mode_t mode;
-	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+	//struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+	struct pkt send_buf;
+	struct pkt recv_buf;
+
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
 	printf("mkdir result: %d\n", res);
 	printf("mode: %hu\n", mode);
 	printf("path: %s\n", path);
-	
-	bound_send(sock,pkt_data,&res,sizeof(int));
+
+	bound_send(sock,&send_buf,&res,sizeof(int));
 	if (res == 0) {
         struct stat st;
         if (stat(path, &st) == 0) {
@@ -336,7 +339,7 @@ int fuse_study_mkdir(int sock, char *path)
             free(stat_pkt);
         }
     }
-	free(pkt_data);
+	//free(pkt_data);
 	return 0;
 }
 

@@ -463,26 +463,32 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
 
 void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode)
 {
-    int opcode = MKDIR;
-    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL){
+    unsigned short opcode = MKDIR;
+    struct pkt send_buf;
+    struct pkt recv_buf;
+    /*if(pkt_data == NULL){
         fuse_reply_err(req, ENOMEM);
         return;
-    }
-    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
-    bound_send(serv_sd,pkt_data,_path,strlen(_path));
+    }*/
+    // bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    // bound_send(serv_sd,pkt_data,_path,strlen(_path));
+	// write(serv_sd,&mode,sizeof(mode_t));
+
+    bound_send(serv_sd,&send_buf,&opcode,sizeof(unsigned short));
+    bound_send(serv_sd,&send_buf,_path,strlen(_path));
 	write(serv_sd,&mode,sizeof(mode_t));
 
-    bound_read(serv_sd, pkt_data);
+
+    bound_read(serv_sd, &recv_buf);
     int result;
-    memcpy(&result, pkt_data->buf, sizeof(int));
+    memcpy(&result, recv_buf.buf, sizeof(int));
 
     printf("mkdir result: %d\n", result);
     
     if (result == 0) {
-        bound_read(serv_sd, pkt_data);
+        bound_read(serv_sd, &recv_buf);
         struct stat st;
-        memcpy(&st, pkt_data->buf, sizeof(struct stat));
+        memcpy(&st, recv_buf.buf, sizeof(struct stat));
         
         struct fuse_entry_param entry;
         memset(&entry, 0, sizeof(entry));
@@ -495,7 +501,7 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
         fuse_reply_err(req, -result); 
     }
     
-    free(pkt_data);
+    //free(pkt_data);
 }
 
 void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
