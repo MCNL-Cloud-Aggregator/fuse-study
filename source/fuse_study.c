@@ -11,16 +11,9 @@
 
 
 void error_handling(char*);
-//void fuse_study_init(void *userdata, fuse_conn_info *conn);
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *name);
 int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *name);
-
-/*static const struct fuse_operations fs_oper = {
-	.init           = fuse_study_init,
-	.unlink		= fuse_study_unlink,
-    .create = fuse_study_create
-};*/
 
 
 static const struct fuse_lowlevel_ops fs_oper = {
@@ -29,8 +22,6 @@ static const struct fuse_lowlevel_ops fs_oper = {
     //.create = fuse_study_create,
 	.lookup = fuse_study_lookup
 };
-
-
 
 int serv_sd;
 
@@ -70,19 +61,14 @@ int main(int argc, char *argv[]) {
         goto err_destroy;
     }
 
-    // 4. 데몬화: 이 위치에 넣기
     if (!opts.foreground) {
         if (fuse_daemonize(0) == -1) {
             perror("fuse_daemonize");
             goto err_unmount;
         }
     }
-    //config.clone_fd = 1;
-    //config.max_idle_threads = 10;
 
     // 이벤트 루프 실행
-    //ret = fuse_session_loop_mt(se, &config);
-    //ret = fuse_session_loop_mt_proc(se, &config);
     ret = fuse_session_loop_mt(se, 0);  // clone_fd = 0
 err_unmount:
     fuse_session_unmount(se);   // 마운트 해제
@@ -99,39 +85,6 @@ void error_handling(char* message) {
     fputc('\n', stderr);
     exit(1);
 }
-
-/*int fuse_study_unlink(const char *path){
-    //여기에서는 opcode와 path를 전달
-    struct pkt send_buf;
-    struct pkt recv_buf;
-    status stat;
-    //int serv_sd;
-    unsigned short opcode = UNLINK;
-
-    printf("jkawhsdjkhfhjkashdfkjasdf\n");
-    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
-    bound_send(serv_sd, &send_buf, "/path", strlen("/path"));
-
-    do{
-        bound_read(serv_sd, &recv_buf);
-        memcpy(&stat, recv_buf.buf, sizeof(status));
-
-        switch (stat.status)
-        {
-        case 0 : //임시 error status
-            //show help(오류로 인한 클라이언트에서 기능 관련 내용을 출력)
-            break;
-        
-        default:
-            break;
-        }
-        
-    }while(stat.end != 1);
-
-    //return status code를 받고, 해당 code에 따라서 상태 메시지 출력 or 출력 x
-
-    return 0;
-}*/
 
 
 
