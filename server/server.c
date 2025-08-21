@@ -56,6 +56,9 @@ void* thread_handler(void* arg) {
 	switch(opcode) {
 		case 0x00 : int flag = (access(path, F_OK) == 0);
 					bound_send(client_sock, &send_buf, &flag, sizeof(int));
+					struct stat st;
+					lstat(path, &st);
+					bound_send(client_sock,&send_buf,&st,sizeof(struct stat));
 					break;
 		case 0x01 : fuse_study_getattr(client_sock, path); break;
 		case 0x02 : printf("ls %s start\n",path); fuse_study_readdir(client_sock,path); printf("end\n"); break;

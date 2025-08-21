@@ -362,15 +362,14 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
 
 
     if(flag == 1){
-            // 예시: 그냥 inode=1인 더미 regular file 응답
-        e.ino = 100;  // FUSE_ROOT_ID(1)와 겹치지 않는 값
-        e.attr.st_mode = 0100000 | 0644;
-        e.attr.st_nlink = 1;
-        e.attr.st_uid = getuid();
-        e.attr.st_gid = getgid();
-        e.attr.st_size = 0;
+        bound_read(serv_sd, &recv_buf);
+        struct stat st;
+        memcpy(&st, recv_buf.buf, sizeof(struct stat));
+        e.ino = st.st_ino;
+        e.attr = st;
         e.attr_timeout = 1.0;
         e.entry_timeout = 1.0;
+        
         fuse_reply_entry(req, &e);
     }
 
