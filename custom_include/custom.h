@@ -32,6 +32,7 @@ header 파일 분리
 
 //opcode 매크로 등록
 #define UNLINK 0x08
+#define CREATE 0X05
 /*
 server_socket descriptor
 
