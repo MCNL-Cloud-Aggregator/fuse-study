@@ -204,7 +204,7 @@ int main() {
 int fuse_study_readdir(int sock){
     DIR *dp;
     struct dirent *de;
-    char real_path[BUF_SIZE];
+    char real_path[BUF_SIZE*2];
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     int flag = 1;
    if(pkt_data == NULL){
@@ -212,6 +212,7 @@ int fuse_study_readdir(int sock){
 		exit(1);
 	}
     bound_read(sock,pkt_data);
+	
     snprintf(real_path,sizeof(real_path),".%s",pkt_data->buf);
     dp = opendir(real_path);
 
