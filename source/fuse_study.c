@@ -140,18 +140,17 @@ void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) 
     // 서버에서 에러코드 주면 그대로 fuse_reply_err(req, errno) 하면 됨
 }
 
-//void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
+void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
 	
-//	struct pkt send_buf, read_buf;
-//	unsigned short opcode = READ;
-//	char* data;
+	struct pkt send_buf, read_buf;
+	unsigned short opcode = READ;
 	
-//	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
-//	bound_send(serv_sd, &send_buf, _path, strlen(_path));
+	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
+	bound_send(serv_sd, &send_buf, _path, strlen(_path));
 	
-//	bound_send(serv_sd, &send_buf, buf, strlen(buf));
+	bound_send(serv_sd, &send_buf, buf, strlen(buf));
 	
-//}
+}
 
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {
     printf("unlink executed: parent=%lu, name=%s\n", parent, path);
