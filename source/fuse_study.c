@@ -143,6 +143,17 @@ int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
    return 0;
 }
 
+void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+	
+	struct pkt send_buf;
+	unsigned short opcode = READ;
+	
+	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
+	bound_send(serv_sd, &send_buf, _path, strlen(_path));
+	
+	
+}
+
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
     printf("lookup executed: parent=%lu, name=%s\n", parent, path);
 
