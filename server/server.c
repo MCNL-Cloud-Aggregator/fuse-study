@@ -24,7 +24,7 @@ gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 -
 int fuse_study_readdir(int sock, char *path);
 int fuse_study_rmdir(int sock,char *path);
 int fuse_study_mkdir(int sock, char *path);
-int fuse_study_create(char *path);
+int fuse_study_create(int client_sock, char *path);
 int fuse_study_read(int client_sock, char* path);
 int fuse_study_write(int client_sock, char* path);
 int fuse_study_open(int sock, char *path);
@@ -64,7 +64,7 @@ void* thread_handler(void* arg) {
 		case 0x02 : printf("ls %s start\n",path); fuse_study_readdir(client_sock,path); printf("end\n"); break;
 		case 0x03 : fuse_study_open(client_sock,path); break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
-		case 0x05 : fuse_study_create(path); break;// fuse_study_create();
+		case 0x05 : fuse_study_create(client_sock, path); break;// fuse_study_create();
 		case 0x06 : fuse_study_mkdir(client_sock,path); break;
 		case 0x07 : printf("write start\n"); fuse_study_write(client_sock, path); printf("write terminated\n"); break;
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
@@ -321,6 +321,10 @@ int fuse_study_mkdir(int sock, char *path)
 	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
+	printf("mkdir result: %d\n", res);
+	printf("mode: %hu\n", mode);
+	printf("path: %s\n", path);
+	
 	bound_send(sock,pkt_data,&res,sizeof(int));
 	if (res == 0) {
         struct stat st;
@@ -345,7 +349,11 @@ int fuse_study_rmdir(int sock, char *path)
 	return 0;
 }
 
-int fuse_study_create(char *path){
+int fuse_study_create(int client_sock, char *path){
+	int res = 0;
+	struct pkt send_buf;
+	struct stat st;
+
 	int fd = open(path, O_WRONLY | O_CREAT, 0644);
     if (fd < 0) {
         perror("open");
@@ -353,7 +361,9 @@ int fuse_study_create(char *path){
     }
     close(fd);
 
-    return 0;
+	res = lstat(path, &st);
+	bound_send(client_sock, &send_buf, &st, sizeof(struct stat));
+    return res;
 }
 
 int fuse_study_read(int client_sock, char* path) {

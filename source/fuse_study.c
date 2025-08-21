@@ -289,6 +289,7 @@ void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *path, mode
     //여기에서는 opcode와 path를 전달
     unsigned short opcode = CREATE;
     struct pkt send_buf;
+    struct pkt recv_buf;
     char* data;
     data = (char*)malloc(sizeof(char) * (strlen(path) + 1));
     strcpy(data, path);
@@ -297,15 +298,20 @@ void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *path, mode
     bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
     bound_send(serv_sd, &send_buf, data, strlen(path));
 
+    struct stat st;
     struct fuse_entry_param e;
     memset(&e, 0, sizeof(e));
 
-    e.ino = 101;                        // 새로 생성된 파일 inode
-    e.attr.st_mode = 0100000 | mode;    // regular file + mode
-    e.attr.st_nlink = 1;
-    e.attr.st_uid = getuid();
-    e.attr.st_gid = getgid();
-    e.attr.st_size = 0;
+    bound_read(serv_sd, &recv_buf);
+    memcpy(&st, recv_buf.buf, sizeof(struct stat));
+
+
+    e.ino = st.st_ino;                        // 새로 생성된 파일 inode
+    e.attr.st_mode = 0100000 | st.st_mode;    // regular file + mode
+    e.attr.st_nlink = st.st_nlink;
+    e.attr.st_uid = st.st_uid;
+    e.attr.st_gid = st.st_gid;
+    e.attr.st_size = st.st_size;
     e.attr_timeout = 1.0;
     e.entry_timeout = 1.0;
 
@@ -342,9 +348,17 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
         free(_path);
     }
 
-    _path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
-    strcpy(_path, path);
-    _path[strlen(path)] = '\0';
+    if(strlen(path) == 0 || path == NULL){
+        printf("asjkdchkjashdckjhaskjdhjkchasd\n");
+        _path = (char*)malloc(sizeof(char) * (strlen("./") + 1));
+        strcpy(_path, "./");
+        _path[strlen("./")] = '\0';
+    }
+    else{
+        _path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
+        strcpy(_path, path);
+        _path[strlen(path)] = '\0';
+    }
     
     unsigned short opcode = LOOKUP;
     struct pkt send_buf;
@@ -400,6 +414,8 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     } else {
         path_to_send = "./";
     }
+
+    printf("dir check: %s\n", path_to_send);
     bound_send(serv_sd, pkt_data, path_to_send, strlen(path_to_send)+1);
     
     char *buffer = malloc(size);
@@ -460,6 +476,8 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
     bound_read(serv_sd, pkt_data);
     int result;
     memcpy(&result, pkt_data->buf, sizeof(int));
+
+    printf("mkdir result: %d\n", result);
     
     if (result == 0) {
         bound_read(serv_sd, pkt_data);
