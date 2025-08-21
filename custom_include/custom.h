@@ -21,6 +21,8 @@ header 파일 분리
 
 #define FUSE_USE_VERSION 31
 
+
+#include <fuse.h>
 #include <fuse_lowlevel.h>
 #include <stdio.h>
 #include <string.h>
@@ -79,5 +81,5 @@ static const struct fuse_opt option_spec[] = {
 };*/
 
 //int fuse_study_unlink(const char *path);
-int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
-void *fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
+//int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
+//void *fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
