@@ -24,6 +24,7 @@ gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 -
 int fuse_study_readdir(int sock, char *path);
 int fuse_study_rmdir(int sock,char *path);
 int fuse_study_mkdir(int sock, char *path);
+int fuse_study_create(char *path);
 
 struct thread_arg {
 	unsigned short opcode;
@@ -48,8 +49,13 @@ void* thread_handler(void* arg) {
 		case 0x01 : // fuse_study_getattr();
 		case 0x02 : fuse_study_readdir(client_sock,path);
 		case 0x03 : // fuse_study_open();
+<<<<<<< HEAD
 		case 0x04 : printf("read start\n"); fuse_study_read(); printf("read terminated\n"); break;
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
+=======
+		case 0x04 : // fuse_study_read();
+		case 0x05 : fuse_study_create(path); break;// fuse_study_create();
+>>>>>>> a7f72f6c1412a3750a08b0772d43e1cde1d9d7fb
 		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
 		case 0x07 : // fuse_study_write();
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
@@ -248,7 +254,6 @@ int fuse_study_mkdir(int sock, char *path)
     mode_t mode;
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
-    write(sock,&res,sizeof(int));
 	return 0;
 }
 
@@ -256,6 +261,21 @@ int fuse_study_rmdir(int sock, char *path)
 {
 	int res;
 	res = rmdir(path);
-	write(sock,&res,sizeof(int));
 	return 0;
+}
+
+int fuse_study_create(char *path){
+	int fd = open(path, O_WRONLY | O_CREAT, 0644);
+    if (fd < 0) {
+        perror("open");
+        return -1;
+    }
+    close(fd);
+
+    if (utime(path, NULL) < 0) {
+        perror("utime");
+        return -1;
+    }
+
+    return 0;
 }

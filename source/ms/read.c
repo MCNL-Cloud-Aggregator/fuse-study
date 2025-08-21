@@ -25,3 +25,22 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 	}
 	
 }
+
+int fuse_study_read(int client_sock, char* path) {
+	
+	struct pkt read_buf, send_buf;
+	char* data = NULL;
+	
+	FILE* read_fd = fopen(path, "rb");
+	fseek(read_fd, 0, SEEK_END);
+    long file_size = ftell(read_fd);
+    rewind(read_fd);
+	
+	data = (char*)malloc(file_size);
+	
+	fread(data, 1, file_size, read_fd);
+	
+	bound_send(client_sock, &send_buf, data, file_size);
+	
+	return 0;
+}
