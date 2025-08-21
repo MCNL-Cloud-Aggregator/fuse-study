@@ -244,6 +244,19 @@ int fuse_study_readdir(int sock, char *path){
     return 0;
 }
 
+int fuse_study_open(int sock, char *path)
+{
+	int res;
+    struct fuse_file_info fi;
+    res = open(path, O_RDONLY);
+    if (res < 0) {
+        perror("open");
+        return -1;
+    }
+    close(res);
+    return 0;
+}
+
 int fuse_study_mkdir(int sock, char *path)
 {
 	int res;
