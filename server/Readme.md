@@ -1,0 +1,1 @@
+gcc server.c ../custom_include/bound.c -o serv
