@@ -10,7 +10,6 @@
 #include "bound.h"
 
 #define EPOLL_SIZE 96
-#define BUFSIZE 512
 #define DEFAULT_PATH "/"
 #define PORT 9000
 
