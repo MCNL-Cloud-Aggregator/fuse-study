@@ -7,7 +7,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <sys/epoll.h>
-#include "bound.h"
+#include "../custom_include/bound.h"
 
 #define EPOLL_SIZE 96
 #define DEFAULT_PATH "/"
@@ -145,18 +145,15 @@ int main() {
 				
 				memcpy(&thread_arg.opcode, pkt.buf, pkt.size);
 				
-				// path 크기 수신
-				size_t path_len;
-				bound_read(epoll_events[i].data.fd, &pkt);
-				
-				memcpy(&path_len, pkt.buf, pkt.size);
-				printf("path_len : %ld\n", path_len);
-				
 				// path 수신 및 thread_arg에 path 저장
-				char* path = malloc(path_len);
+				char* path = NULL;
 				size_t received_byte = 0;
 				do {
 					bound_read(epoll_events[i].data.fd, &pkt);
+					if (path == NULL) {
+						path = malloc(pkt.total_size);
+					}
+					
 					strncpy(&path[received_byte], pkt.buf, pkt.size);
 					received_byte += pkt.size;
 					if (pkt.end == 1) {
