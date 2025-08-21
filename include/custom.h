@@ -29,6 +29,29 @@ header 파일 분리
 #include <stddef.h>
 #include <assert.h>
 
+
+//opcode 매크로 등록
+#define UNLINK 0x08
+/*
+server_socket descriptor
+
+/mnt/hello/hello.c
+./hello/hello.c
+*/
+
+typedef struct status{
+	uint8_t status;
+	uint8_t end;
+	size_t size; //body length
+	char body[512];
+}status;
+
+
+/*
+status
+
+*/
+
 /*
  * Command line options
  *
@@ -41,6 +64,7 @@ static struct options {
 	const char *contents;
 	int show_help;
 } options;
+
 
 #define OPTION(t, p)                           \
     { t, offsetof(struct options, p), 1 }
