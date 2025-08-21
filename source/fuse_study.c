@@ -199,21 +199,40 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
     _path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
     strcpy(_path, path);
     _path[strlen(path)] = '\0';
+    
+    unsigned short opcode = LOOKUP;
+    struct pkt send_buf;
+    struct pkt recv_buf;
+    int flag;
+    
+    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
+    bound_send(serv_sd, &send_buf, _path, strlen(_path));
+
+    bound_read(serv_sd, &recv_buf);
+    memcpy(&flag, recv_buf.buf, sizeof(int));
 
     struct fuse_entry_param e;
     memset(&e, 0, sizeof(e));
 
-    // 예시: 그냥 inode=1인 더미 regular file 응답
-    e.ino = 100;  // FUSE_ROOT_ID(1)와 겹치지 않는 값
-    e.attr.st_mode = 0100000 | 0644;
-    e.attr.st_nlink = 1;
-    e.attr.st_uid = getuid();
-    e.attr.st_gid = getgid();
-    e.attr.st_size = 0;
-    e.attr_timeout = 1.0;
-    e.entry_timeout = 1.0;
 
-    fuse_reply_entry(req, &e);
+    if(flag == 1){
+            // 예시: 그냥 inode=1인 더미 regular file 응답
+        e.ino = 100;  // FUSE_ROOT_ID(1)와 겹치지 않는 값
+        e.attr.st_mode = 0100000 | 0644;
+        e.attr.st_nlink = 1;
+        e.attr.st_uid = getuid();
+        e.attr.st_gid = getgid();
+        e.attr.st_size = 0;
+        e.attr_timeout = 1.0;
+        e.entry_timeout = 1.0;
+        fuse_reply_entry(req, &e);
+    }
+
+    else{
+        fuse_reply_err(req, ENOENT);
+    }
+    
+
 }
 
 void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,

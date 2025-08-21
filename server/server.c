@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include "../custom_include/bound.h"
 
 #define EPOLL_SIZE 96
@@ -38,9 +39,11 @@ void* thread_handler(void* arg) {
 	int epfd = ((struct thread_arg*) arg)->epfd;
 	struct epoll_event event = ((struct thread_arg*) arg)->event;
 	char* path = ((struct thread_arg*) arg)->path;
+
+	struct pkt send_buf;
 	
 	switch(opcode) {
-		case 0x00 : break;
+		case 0x00 : int flag = (access(path, F_OK) == 0); bound_send(client_sock, &send_buf, &flag, sizeof(int)); break;
 		case 0x01 : // fuse_study_getattr();
 		case 0x02 : fuse_study_readdir(client_sock);
 		case 0x03 : // fuse_study_open();
