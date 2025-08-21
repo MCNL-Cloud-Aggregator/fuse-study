@@ -4,6 +4,7 @@
         "assert.h": "c",
         "fcntl.h": "c",
         "stdio.h": "c",
-        "fuse.h": "c"
+        "fuse.h": "c",
+        "bound.h": "c"
     }
 }

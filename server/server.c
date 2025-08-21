@@ -21,9 +21,9 @@
 gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 --cflags --libs` -o fs_cli
 */
 
-int fuse_study_readdir(int sock);
-int fuse_study_rmdir(int sock);
-int fuse_study_mkdir(int sock);
+int fuse_study_readdir(int sock, char *path);
+int fuse_study_rmdir(int sock,char *path);
+int fuse_study_mkdir(int sock, char *path);
 
 struct thread_arg {
 	unsigned short opcode;
@@ -46,14 +46,19 @@ void* thread_handler(void* arg) {
 					bound_send(client_sock, &send_buf, &flag, sizeof(int));
 					break;
 		case 0x01 : // fuse_study_getattr();
-		case 0x02 : fuse_study_readdir(client_sock);
+		case 0x02 : fuse_study_readdir(client_sock,path);
 		case 0x03 : // fuse_study_open();
 		case 0x04 : // fuse_study_read();
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
-		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
+		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
 		case 0x07 : // fuse_study_write();
+<<<<<<< Updated upstream
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
 		case 0x09 : fuse_study_rmdir(client_sock); break;
+=======
+		case 0x08 : printf("%s", path); fflush(stdout); break;// fuse_study_unlink();
+		case 0x09 : fuse_study_rmdir(client_sock,path); break;
+>>>>>>> Stashed changes
 		default : break;
 	}
 	
@@ -205,20 +210,13 @@ int main() {
 }
 
 
-int fuse_study_readdir(int sock){
+int fuse_study_readdir(int sock, char *path){
     DIR *dp;
     struct dirent *de;
-    char real_path[BUF_SIZE*2];
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     int flag = 1;
-   if(pkt_data == NULL){
-		perror("calloc() error\n");
-		exit(1);
-	}
-    bound_read(sock,pkt_data);
 	
-    snprintf(real_path,sizeof(real_path),".%s",pkt_data->buf);
-    dp = opendir(real_path);
+    dp = opendir(path);
 
 	if (dp == NULL){
         int error = -errno;
@@ -249,34 +247,20 @@ int fuse_study_readdir(int sock){
     return 0;
 }
 
-int fuse_study_mkdir(int sock)
+int fuse_study_mkdir(int sock, char *path)
 {
 	int res;
-    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL){
-		perror("calloc() error\n");
-		exit(1);
-	}
-    bound_read(sock,pkt_data);
     mode_t mode;
     read(sock,&mode,sizeof(mode_t));
-	res = mkdir(pkt_data->buf, mode);
+	res = mkdir(path, mode);
     write(sock,&res,sizeof(int));
-    free(pkt_data);
 	return 0;
 }
 
-int fuse_study_rmdir(int sock)
+int fuse_study_rmdir(int sock, char *path)
 {
 	int res;
-    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL){
-		perror("calloc() error\n");
-		exit(1);
-	}
-    bound_read(sock,pkt_data);
-	res = rmdir(pkt_data->buf);
+	res = rmdir(path);
 	write(sock,&res,sizeof(int));
-    free(pkt_data);
 	return 0;
 }

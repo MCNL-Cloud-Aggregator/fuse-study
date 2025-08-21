@@ -351,13 +351,13 @@ int fuse_main_real_versioned(int argc, char *argv[],
 		res = 3;
 		goto out1;
 	}
-
-	if (fuse_mount(fuse,opts.mountpoint) != 0) {
+ 
+	if (fuse_mount(fuse,opts.mountpoint) != 0) { //중요
 		res = 4;
 		goto out2;
 	}
 
-	if (fuse_daemonize(opts.foreground) != 0) {
+	if (fuse_daemonize(opts.foreground) != 0) { // 중요
 		res = 5;
 		goto out3;
 	}
@@ -369,7 +369,7 @@ int fuse_main_real_versioned(int argc, char *argv[],
 	}
 
 	if (opts.singlethread)
-		res = fuse_loop(fuse);
+		res = fuse_loop(fuse); // 중요
 	else {
 		loop_config = fuse_loop_cfg_create();
 		if (loop_config == NULL) {
