@@ -7,6 +7,9 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <sys/epoll.h>
+#include <errno.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include "../custom_include/bound.h"
 
 #define EPOLL_SIZE 96
