@@ -57,7 +57,7 @@ void* thread_handler(void* arg) {
 		case 0x03 : /*fuse_study_open(client_sock,path);*/ break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
 		case 0x05 : fuse_study_create(path); break;// fuse_study_create();
-		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
+		case 0x06 : printf("%s\n",path); fuse_study_mkdir(client_sock,path); printf("end\n"); break;
 		case 0x07 : // fuse_study_write();
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
 		case 0x09 : fuse_study_rmdir(client_sock,path); break;
