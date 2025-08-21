@@ -476,11 +476,11 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
 
     bound_send(serv_sd,&send_buf,&opcode,sizeof(unsigned short));
     bound_send(serv_sd,&send_buf,_path,strlen(_path));
-	write(serv_sd,&mode,sizeof(mode_t));
+    bound_send(serv_sd,&send_buf,&mode,sizeof(mode_t));
 
 
     bound_read(serv_sd, &recv_buf);
-    int result;
+    int result = 0;
     memcpy(&result, recv_buf.buf, sizeof(int));
 
     printf("mkdir result: %d\n", result);

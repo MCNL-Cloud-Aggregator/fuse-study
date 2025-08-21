@@ -322,7 +322,9 @@ int fuse_study_mkdir(int sock, char *path)
 	struct pkt send_buf;
 	struct pkt recv_buf;
 
-    read(sock,&mode,sizeof(mode_t));
+    //read(sock,&mode,sizeof(mode_t));
+	bound_read(sock, &recv_buf);
+	memcpy(&mode, recv_buf.buf, sizeof(mode_t));
 	res = mkdir(path, mode);
 	printf("mkdir result: %d\n", res);
 	printf("mode: %hu\n", mode);
