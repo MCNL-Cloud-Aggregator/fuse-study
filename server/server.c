@@ -45,7 +45,7 @@ void* thread_handler(void* arg) {
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
 		case 0x06 : fuse_study_mkdir(client_sock);
 		case 0x07 : // fuse_study_write();
-		case 0x08 : printf("%s", path); break;// fuse_study_unlink();
+		case 0x08 : printf("%s", path); fflush(stdout); break;// fuse_study_unlink();
 		case 0x09 : fuse_study_rmdir(client_sock);
 		default : break;
 	}
