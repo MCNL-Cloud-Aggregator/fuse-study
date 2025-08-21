@@ -37,7 +37,7 @@ void* thread_handler(void* arg) {
 		case 0x05 : // fuse_study_create();
 		case 0x06 : // fuse_study_mkdir();
 		case 0x07 : // fuse_study_write();
-		case 0x08 : // fuse_study_unlink();
+		case 0x08 : fputs("unlink check\n", stdout); break;// fuse_study_unlink();
 		case 0x09 : // fuse_study_rmdir();
 		default : break;
 	}
