@@ -259,7 +259,7 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     }
     
     bound_send(serv_sd, pkt_data, &opcode, sizeof(int));
-    bound_send(serv_sd, pkt_data, _path, strlen(_path) + 1);
+    bound_send(serv_sd, pkt_data, _path, strlen(_path));
     
     char *buffer = malloc(size);
     if (!buffer) {
@@ -315,10 +315,8 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
         fuse_reply_err(req, ENOMEM);
         return;
     }
-    char full_path[BUF_SIZE];
-    snprintf(full_path, sizeof(full_path), "%s/%s", _path, name);
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
-    bound_send(serv_sd,pkt_data,full_path,strlen(full_path)+1);
+    bound_send(serv_sd,pkt_data,_path,strlen(_path));
 	write(serv_sd,&mode,sizeof(mode_t));
 
     bound_read(serv_sd, pkt_data);
@@ -353,7 +351,7 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
         return;
     }
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
-    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+    bound_send(serv_sd,pkt_data,_path,strlen(_path));
 
     bound_read(serv_sd, pkt_data);
     int result;

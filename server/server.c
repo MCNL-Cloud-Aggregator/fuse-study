@@ -180,7 +180,7 @@ int main() {
 				do {
 					bound_read(epoll_events[i].data.fd, &pkt);
 					if (path == NULL) {
-						path = malloc(pkt.total_size);
+						path = malloc(pkt.total_size + 1);
 					}
 					
 					strncpy(&path[received_byte], pkt.buf, pkt.size);
@@ -189,6 +189,8 @@ int main() {
 						break;
 					}
 				} while (true);
+
+				path[pkt.total_size] = '\0';
 				thread_arg.path = path;
 				
 				// thread_arg에 client_sock, epfd, event 저장
