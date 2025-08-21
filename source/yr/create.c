@@ -1,14 +1,15 @@
 #include "../../custom_include/bound.h"
 #include "../../custom_include/custom.h"
 
-int fuse_study_unlink(const char *path){
+int fuse_study_create(const char *path, mode_t mode,
+		      struct fuse_file_info *fi){
     //여기에서는 opcode와 path를 전달
     struct pkt send_buf;
     struct pkt recv_buf;
     status stat;
     int serv_sd = 0; //전역변수 사용예정
 
-    bound_send(serv_sd, &send_buf, UNLINK, sizeof(unsigned short));
+    bound_send(serv_sd, &send_buf, CREATE, sizeof(unsigned short));
     bound_send(serv_sd, &send_buf, "/path", strlen("/path"));
 
     do{
