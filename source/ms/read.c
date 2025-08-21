@@ -1,9 +1,13 @@
 #include <../custom_include/custom.h>
 #include <../custom_include/bound.h>
 
-static int fuse_study_read(struct fuse_req_t req, struct fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
 	
-	connect
-
-	return size;
+	struct pkt send_buf;
+	unsigned short opcode = READ;
+	
+	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
+	bound_send(serv_sd, &send_buf, _path, strlen(_path));
+	
+	
 }

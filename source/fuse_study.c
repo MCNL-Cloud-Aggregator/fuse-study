@@ -14,13 +14,18 @@ void error_handling(char*);
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *name);
 int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *name);
-
+void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,struct fuse_file_info *fi);
+void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode);
+void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name);
 
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
 	.unlink		= fuse_study_unlink,
     //.create = fuse_study_create,
-	.lookup = fuse_study_lookup
+	.lookup = fuse_study_lookup,
+    .readdir = fuse_study_readdir,
+    .mkdir = fuse_study_mkdir,
+    .rmdir = fuse_study_rmdir,
 };
 
 int serv_sd;
@@ -143,6 +148,17 @@ int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
    return 0;
 }
 
+void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
+	
+	struct pkt send_buf;
+	unsigned short opcode = READ;
+	
+	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
+	bound_send(serv_sd, &send_buf, _path, strlen(_path));
+	
+	
+}
+
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
     printf("lookup executed: parent=%lu, name=%s\n", parent, path);
 
@@ -168,4 +184,94 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
     e.entry_timeout = 1.0;
 
     fuse_reply_entry(req, &e);
+}
+
+void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
+                       struct fuse_file_info *fi) {
+    (void) fi;
+    int opcode = 2;
+    struct pkt *pkt_data = calloc(1, sizeof(struct pkt));
+    if (pkt_data == NULL) {
+        fuse_reply_err(req, ENOMEM);
+        return;
+    }
+    
+    bound_send(serv_sd, pkt_data, &opcode, sizeof(int));
+    bound_send(serv_sd, pkt_data, _path, strlen(_path) + 1);
+    
+    char *buffer = malloc(size);
+    if (!buffer) {
+        free(pkt_data);
+        fuse_reply_err(req, ENOMEM);
+        return;
+    }
+    
+    size_t bufsize = 0;
+    int current_offset = 0;
+    
+    while (1) {
+        int flag;
+        bound_read(serv_sd, pkt_data);
+        memcpy(&flag, pkt_data->buf, sizeof(int));  
+        
+        if (flag == 0) break;
+        
+        bound_read(serv_sd, pkt_data);
+        
+        struct pkt *st_pkt = calloc(1, sizeof(struct pkt));
+        bound_read(serv_sd, st_pkt);
+        
+        struct stat st;
+        memcpy(&st, st_pkt->buf, sizeof(struct stat));
+        
+        if (current_offset >= off) {  
+            size_t entry_size = fuse_add_direntry(req, buffer + bufsize, 
+                                                 size - bufsize,
+                                                 pkt_data->buf, &st, 
+                                                 current_offset + 1);
+            if (entry_size > size - bufsize) {
+                free(st_pkt);
+                break;  
+            }
+            bufsize += entry_size;
+        }
+        
+        current_offset++;
+        free(st_pkt);
+    }
+    
+    free(pkt_data);
+    fuse_reply_buf(req, buffer, bufsize);
+    free(buffer);
+}
+
+void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode)
+{
+    int opcode = 6;
+    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+    if(pkt_data == NULL)
+        error_handling("calloc() error");
+    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+	write(serv_sd,&mode,sizeof(mode_t));
+    int res;
+    read(serv_sd,&res,sizeof(int));
+    if (res == -1)
+		error_handling("read() error");
+    free(pkt_data);
+}
+
+void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
+{
+    int opcode = 9;
+	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+    if(pkt_data == NULL)
+        error_handling("calloc() error");
+    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+    int res;
+    read(serv_sd,&res,sizeof(int));
+    if (res == -1)
+		error_handling("read() error");
+    free(pkt_data);
 }
