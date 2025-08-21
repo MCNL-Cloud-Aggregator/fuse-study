@@ -1,6 +1,6 @@
 #include "bound.h"
 
-/*int bound_read(const int sd, struct pkt* buf){
+int bound_read(const int sd, struct pkt* buf){
     int total_read = 0;
     int read_cnt = 0;
     int read_sz = (int)sizeof(struct pkt);
@@ -17,9 +17,9 @@
     }
 
     return buf->size;
-}*/
+}
 
-int bound_read(const int sd, struct pkt* buf){
+/*int bound_read(const int sd, struct pkt* buf){
     int total_read = 0;
     int read_cnt = 0;
     int read_sz = sizeof(struct pkt);
@@ -36,7 +36,7 @@ int bound_read(const int sd, struct pkt* buf){
     }
 
     return buf->size;
-}
+}*/
 
 int bound_send(const int sd, struct pkt* buf, void* data, size_t data_size){
     size_t remain_len = data_size;
