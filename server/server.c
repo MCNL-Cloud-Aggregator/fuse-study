@@ -187,7 +187,6 @@ int main() {
 					if (path == NULL) {
 						path = malloc(pkt.total_size + 1);
 					}
-					memset(path,0,pkt.total_size+1);
 					strncpy(&path[received_byte], pkt.buf, pkt.size);
 					received_byte += pkt.size;
 					if (pkt.end == 1) {
