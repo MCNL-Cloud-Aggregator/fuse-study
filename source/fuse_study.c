@@ -24,6 +24,7 @@ static const struct fuse_lowlevel_ops fs_oper = {
 };
 
 int serv_sd;
+char* _path;
 
 int main(int argc, char *argv[]) {
     struct fuse_args args = FUSE_ARGS_INIT(argc, argv);
@@ -88,17 +89,17 @@ void error_handling(char* message) {
 
 
 
-void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    printf("unlink executed: parent=%lu, name=%s\n", parent, name);
+void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {
+    printf("unlink executed: parent=%lu, name=%s\n", parent, path);
 
     unsigned short opcode = UNLINK;
     struct pkt send_buf;
     char* data;
-    data = (char*)malloc(sizeof(char) * (strlen(name) + 1));
-    strcpy(data, name);
-    data[strlen(name)] = '\0';
+    data = (char*)malloc(sizeof(char) * (strlen(path) + 1));
+    strcpy(data, path);
+    data[strlen(path)] = '\0';
     bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
-    bound_send(serv_sd, &send_buf, data, strlen(name));
+    bound_send(serv_sd, &send_buf, data, strlen(path));
 
     // 서버 응답 대신 일단 성공으로 처리
     fuse_reply_err(req, 0);
@@ -142,8 +143,16 @@ int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
    return 0;
 }
 
-void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *name) {
-    printf("lookup executed: parent=%lu, name=%s\n", parent, name);
+void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
+    printf("lookup executed: parent=%lu, name=%s\n", parent, path);
+
+    if(_path != NULL){
+        free(_path);
+    }
+
+    _path = (char*)malloc(sizeof(char) * (strlen(path) + 1));
+    strcpy(_path, path);
+    _path[strlen(path)] = '\0';
 
     struct fuse_entry_param e;
     memset(&e, 0, sizeof(e));
