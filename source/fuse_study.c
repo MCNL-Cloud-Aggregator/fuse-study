@@ -24,6 +24,8 @@ void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t s
 void fuse_study_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi);
 void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 void fuse_study_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
+void fuse_study_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
+
 
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
@@ -37,7 +39,8 @@ static const struct fuse_lowlevel_ops fs_oper = {
     .read = fuse_study_read,
     .write = fuse_study_write,
     .open = fuse_study_open,
-    .getattr = fuse_study_getattr
+    .getattr = fuse_study_getattr,
+    .opendir = fuse_study_opendir,
 };
 
 int serv_sd;
@@ -489,4 +492,8 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
         fuse_reply_err(req, -result);
     }
     free(pkt_data);
+}
+
+void fuse_study_opendir(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+    fuse_reply_open(req, fi);
 }
