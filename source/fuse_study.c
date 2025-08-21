@@ -257,7 +257,7 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
     int res;
     read(serv_sd,&res,sizeof(int));
     if (res == -1)
-		return -errno;
+		error_handling("read() error");
     free(pkt_data);
 }
 
@@ -272,6 +272,6 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
     int res;
     read(serv_sd,&res,sizeof(int));
     if (res == -1)
-		return -errno;
+		error_handling("read() error");
     free(pkt_data);
 }
