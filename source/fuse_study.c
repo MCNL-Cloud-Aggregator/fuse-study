@@ -27,6 +27,7 @@ static const struct fuse_lowlevel_ops fs_oper = {
     .readdir = fuse_study_readdir,
     .mkdir = fuse_study_mkdir,
     .rmdir = fuse_study_rmdir,
+    .read = fuse_study_read,
 };
 
 int serv_sd;
