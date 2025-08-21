@@ -38,10 +38,10 @@ void* thread_handler(void* arg) {
 		case 0x02 : // fuse_study_readdir();
 		case 0x03 : // fuse_study_open();
 		case 0x04 : // fuse_study_read();
-		case 0x05 : fputs("create check\n", stdout); break;// fuse_study_create();
+		case 0x05 : printf("%s", path); break;// fuse_study_create();
 		case 0x06 : // fuse_study_mkdir();
 		case 0x07 : // fuse_study_write();
-		case 0x08 : fputs("unlink check\n", stdout); break;// fuse_study_unlink();
+		case 0x08 : printf("%s", path); break;// fuse_study_unlink();
 		case 0x09 : // fuse_study_rmdir();
 		default : break;
 	}
