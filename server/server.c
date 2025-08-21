@@ -43,20 +43,18 @@ void* thread_handler(void* arg) {
 	struct pkt send_buf;
 	printf("thread executed\n");
 	switch(opcode) {
-		case 0x00 : printf("lookup check1\n");
-					int flag = (access(path, F_OK) == 0);
+		case 0x00 : int flag = (access(path, F_OK) == 0);
 					bound_send(client_sock, &send_buf, &flag, sizeof(int));
-					printf("lookup check2\n");
 					break;
 		case 0x01 : // fuse_study_getattr();
 		case 0x02 : fuse_study_readdir(client_sock);
 		case 0x03 : // fuse_study_open();
 		case 0x04 : // fuse_study_read();
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
-		case 0x06 : fuse_study_mkdir(client_sock);
+		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
 		case 0x07 : // fuse_study_write();
 		case 0x08 : printf("%s", path); fflush(stdout); break;// fuse_study_unlink();
-		case 0x09 : fuse_study_rmdir(client_sock);
+		case 0x09 : fuse_study_rmdir(client_sock); break;
 		default : break;
 	}
 	
