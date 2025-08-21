@@ -10,6 +10,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #include "../custom_include/bound.h"
 
 #define EPOLL_SIZE 96
