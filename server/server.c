@@ -121,6 +121,7 @@ int main() {
 					printf("[Error] accept()\n");
 					exit(-1);
 				}
+				printf("cliend %d connection created\n", client_sock);
 				
 				// epoll register
 				event.events = EPOLLIN;
