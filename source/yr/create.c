@@ -1,8 +1,10 @@
 #include "../../custom_include/bound.h"
 #include "../../custom_include/custom.h"
 
-int fuse_study_create(const char *path, mode_t mode,
-		      struct fuse_file_info *fi){
+int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
+
+    (void) fi;
+
     //여기에서는 opcode와 path를 전달
     struct pkt send_buf;
     struct pkt recv_buf;
