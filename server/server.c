@@ -49,6 +49,8 @@ void* thread_handler(void* arg) {
 	int epfd = ((struct thread_arg*) arg)->epfd;
 	struct epoll_event event = ((struct thread_arg*) arg)->event;
 	char* path = ((struct thread_arg*) arg)->path;
+	
+	printf("opcode : %hu\n", opcode);
 
 	struct pkt send_buf;
 	switch(opcode) {
