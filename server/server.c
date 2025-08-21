@@ -248,15 +248,30 @@ int fuse_study_mkdir(int sock, char *path)
 {
 	int res;
     mode_t mode;
+	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
+	bound_send(sock,pkt_data,&res,sizeof(int));
+	if (res == 0) {
+        struct stat st;
+        if (stat(path, &st) == 0) {
+            struct pkt *stat_pkt = calloc(1, sizeof(struct pkt));
+            memcpy(stat_pkt->buf, &st, sizeof(struct stat));
+            stat_pkt->total_size = sizeof(struct stat);
+            bound_send(sock, stat_pkt, stat_pkt->buf, stat_pkt->total_size);
+            free(stat_pkt);
+        }
+    }
+	free(pkt_data);
 	return 0;
 }
 
 int fuse_study_rmdir(int sock, char *path)
 {
 	int res;
+	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
 	res = rmdir(path);
+	bound_send(sock,pkt_data,&res,sizeof(int));
 	return 0;
 }
 
@@ -267,11 +282,6 @@ int fuse_study_create(char *path){
         return -1;
     }
     close(fd);
-
-    if (utime(path, NULL) < 0) {
-        perror("utime");
-        return -1;
-    }
 
     return 0;
 }

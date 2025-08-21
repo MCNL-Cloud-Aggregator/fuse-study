@@ -239,7 +239,7 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
 void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
                        struct fuse_file_info *fi) {
     (void) fi;
-    int opcode = 2;
+    int opcode = READDIR;
     struct pkt *pkt_data = calloc(1, sizeof(struct pkt));
     if (pkt_data == NULL) {
         fuse_reply_err(req, ENOMEM);
@@ -299,21 +299,55 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
 {
     int opcode = MKDIR;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
+    if(pkt_data == NULL){
+        fuse_reply_err(req, ENOMEM);
+        return;
+    }
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
     bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
 	write(serv_sd,&mode,sizeof(mode_t));
+
+    bound_read(serv_sd, pkt_data);
+    int result;
+    memcpy(&result, pkt_data->buf, sizeof(int));
+    
+    if (result == 0) {
+        bound_read(serv_sd, pkt_data);
+        struct stat st;
+        memcpy(&st, pkt_data->buf, sizeof(struct stat));
+        
+        struct fuse_entry_param entry;
+        memset(&entry, 0, sizeof(entry));
+        entry.ino = st.st_ino;  
+        entry.attr = st;       
+        entry.attr_timeout = 1.0;
+        entry.entry_timeout = 1.0;
+        fuse_reply_entry(req, &entry);
+    } else {
+        fuse_reply_err(req, -result); 
+    }
+    
     free(pkt_data);
 }
 
 void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
 {
-    int opcode = 9;
+    int opcode = RMDIR;
 	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
+    if (pkt_data == NULL) {
+        fuse_reply_err(req, ENOMEM);
+        return;
+    }
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
     bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+
+    bound_read(serv_sd, pkt_data);
+    int result;
+    memcpy(&result, pkt_data->buf, sizeof(int));
+    if (result == 0) {
+        fuse_reply_err(req, 0);
+    } else {
+        fuse_reply_err(req, -result);
+    }
     free(pkt_data);
 }
