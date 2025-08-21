@@ -264,28 +264,21 @@ int fuse_study_open(int sock, char *path)
     struct pkt pkt;
     int flags = 0;
 
-    // 1) 클라이언트가 보낸 flags 수신
-    ssize_t n = read(sock, &flags, sizeof(flags));
-    if (n != sizeof(flags)) {
+    // 1) flags를 bound_read로 받기
+    struct pkt recv_pkt;
+    if (bound_read(sock, &recv_pkt) <= 0 || recv_pkt.size < sizeof(int)) {
         int err = -EIO;
         bound_send(sock, &pkt, &err, sizeof(err));
         return 0;
     }
+    memcpy(&flags, recv_pkt.buf, sizeof(int));
 
-    // 2) 안전한 플래그 정제 (create는 create 핸들러에서 하므로 제거)
     int oflags = flags & ~(O_CREAT | O_EXCL);
 
-    // 3) 실제 open 시도
     int fd = open(path, oflags);
-    int result;
-    if (fd < 0) {
-        result = -errno;          // 음수 errno로 반환
-    } else {
-        result = 0;
-        close(fd);                // 이 설계에선 fd 유지 불필요(READ/WRITE가 path 기반)
-    }
+    int result = (fd < 0) ? -errno : 0;
+    if (fd >= 0) close(fd);
 
-    // 4) 결과 전송
     bound_send(sock, &pkt, &result, sizeof(result));
     return 0;
 }
