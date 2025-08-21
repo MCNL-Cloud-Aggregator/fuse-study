@@ -35,6 +35,11 @@ struct thread_arg {
 	struct epoll_event event;
 };
 
+struct fuse_file_info {
+    int fh;         
+    int flags;     
+};
+
 void* thread_handler(void* arg) {
 	int client_sock = ((struct thread_arg*) arg)->client_sock;
 	unsigned short opcode = ((struct thread_arg*) arg)->opcode;
@@ -249,7 +254,7 @@ int fuse_study_readdir(int sock, char *path){
     return 0;
 }
 
-/*int fuse_study_open(int sock, char *path)
+int fuse_study_open(int sock, char *path)
 {
 	int res;
     struct fuse_file_info fi;
@@ -260,7 +265,7 @@ int fuse_study_readdir(int sock, char *path){
     }
     close(res);
     return 0;
-}*/
+}
 
 int fuse_study_mkdir(int sock, char *path)
 {
