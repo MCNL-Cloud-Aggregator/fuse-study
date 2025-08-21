@@ -43,6 +43,7 @@ header 파일 분리
 #define UNLINK	0x08
 #define RMDIR	0x09
 #define OPEN	0x03
+#define GETATTR 0x01
 /*
 server_socket descriptor
 

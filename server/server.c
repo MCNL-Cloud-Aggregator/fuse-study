@@ -27,6 +27,8 @@ int fuse_study_mkdir(int sock, char *path);
 int fuse_study_create(char *path);
 int fuse_study_read(int client_sock, char* path);
 int fuse_study_write(int client_sock, char* path);
+int fuse_study_open(int sock, char *path);
+
 
 struct thread_arg {
 	unsigned short opcode;

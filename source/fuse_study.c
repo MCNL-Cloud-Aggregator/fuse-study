@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <linux/stat.h>
 #include <sys/stat.h>
-
+#include <stdbool.h>
 #define SERV_PORT 9000
 #define SERV_IP "203.252.99.216"
 
@@ -20,6 +20,8 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name);
 void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi);
 void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi);
 void fuse_study_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi);
+void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
+void fuse_study_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi);
 
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
@@ -32,6 +34,7 @@ static const struct fuse_lowlevel_ops fs_oper = {
     .rmdir = fuse_study_rmdir,
     .read = fuse_study_read,
     .write = fuse_study_write,
+    .open = fuse_study_open,
 };
 
 int serv_sd;
