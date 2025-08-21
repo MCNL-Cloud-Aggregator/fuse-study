@@ -12,7 +12,7 @@
 
 void error_handling(char*);
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *name);
-int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
+void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode, struct fuse_file_info *fi);
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *name);
 void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,struct fuse_file_info *fi);
 void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode);
@@ -22,7 +22,7 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
 	.unlink		= fuse_study_unlink,
-    //.create = fuse_study_create,
+    .create = fuse_study_create,
 	.lookup = fuse_study_lookup,
     .readdir = fuse_study_readdir,
     .mkdir = fuse_study_mkdir,
@@ -123,6 +123,23 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
     fuse_reply_buf(req, data, read_byte);
 }
 
+void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+
+    unsigned short opcode = OPEN;
+    struct pkt send_buf;
+    char* data = (char*)malloc(sizeof(char) * (strlen(_path) + 1));
+    strcpy(data, _path);
+    data[strlen(_path)] = '\0';
+    
+    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
+    bound_send(serv_sd, &send_buf, data, strlen(data));
+
+    // 서버 응답 대신 일단 성공으로 처리
+    fuse_reply_open(req, fi);
+
+    // 서버에서 에러코드 주면 그대로 fuse_reply_err(req, errno) 하면 됨
+}
+
 //void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
 	
 //	struct pkt send_buf, read_buf;
@@ -145,6 +162,7 @@ void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {
     data = (char*)malloc(sizeof(char) * (strlen(path) + 1));
     strcpy(data, path);
     data[strlen(path)] = '\0';
+
     bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
     bound_send(serv_sd, &send_buf, data, strlen(path));
 
@@ -155,39 +173,34 @@ void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {
 }
 
 
-int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
-
-    (void) fi;
+void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *path, mode_t mode, struct fuse_file_info *fi){
 
     //여기에서는 opcode와 path를 전달
-    struct pkt send_buf;
-    //struct pkt recv_buf;
-    //status stat;
     unsigned short opcode = CREATE;
+    struct pkt send_buf;
+    char* data;
+    data = (char*)malloc(sizeof(char) * (strlen(path) + 1));
+    strcpy(data, path);
+    data[strlen(path)] = '\0';
 
     bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
-    bound_send(serv_sd, &send_buf, "/path", strlen("/path"));
+    bound_send(serv_sd, &send_buf, data, strlen(path));
 
-    /*do{
-        bound_read(serv_sd, &recv_buf);
-        memcpy(&stat, recv_buf.buf, sizeof(status));
+    struct fuse_entry_param e;
+    memset(&e, 0, sizeof(e));
 
-        switch (stat.status)
-        {
-        case 0 : //임시 error status
-            //show help(오류로 인한 클라이언트에서 기능 관련 내용을 출력)
-            break;
-        
-        default:
-            break;
-        }
-        
-    }while(stat.end != 1);*/
+    e.ino = 101;                        // 새로 생성된 파일 inode
+    e.attr.st_mode = 0100000 | mode;    // regular file + mode
+    e.attr.st_nlink = 1;
+    e.attr.st_uid = getuid();
+    e.attr.st_gid = getgid();
+    e.attr.st_size = 0;
+    e.attr_timeout = 1.0;
+    e.entry_timeout = 1.0;
 
-    /*
-    return status code를 받고, 해당 code에 따라서 상태 메시지 출력 or 출력 x
-    */
-   return 0;
+    // fi->fh 같은 경우 필요에 따라 파일 핸들 세팅
+    fi->fh = e.ino;  // 예시
+    fuse_reply_create(req, &e, fi);
 }
 
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
@@ -303,8 +316,10 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
         fuse_reply_err(req, ENOMEM);
         return;
     }
+    char full_path[PATH_MAX];
+    snprintf(full_path, sizeof(full_path), "%s/%s", _path, name);
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
-    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+    bound_send(serv_sd,pkt_data,full_path,strlen(full_path)+1);
 	write(serv_sd,&mode,sizeof(mode_t));
 
     bound_read(serv_sd, pkt_data);
