@@ -19,11 +19,13 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
 void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name);
 void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi);
 void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi);
+void fuse_study_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi);
 
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
 	.unlink		= fuse_study_unlink,
     .create = fuse_study_create,
+    .setattr = fuse_study_setattr,
 	.lookup = fuse_study_lookup,
     .readdir = fuse_study_readdir,
     .mkdir = fuse_study_mkdir,
@@ -103,7 +105,7 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 	char* data = NULL;
 	
 	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
-	bound_send(serv_sd, &send_buf, _path, strlen(_path)+1);
+	bound_send(serv_sd, &send_buf, _path, strlen(_path));
 	
 	size_t read_byte = 0;
 	do {
@@ -203,6 +205,27 @@ void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *path, mode
     // fi->fh 같은 경우 필요에 따라 파일 핸들 세팅
     fi->fh = e.ino;  // 예시
     fuse_reply_create(req, &e, fi);
+}
+
+void fuse_study_setattr(fuse_req_t req, fuse_ino_t ino, struct stat *attr, int to_set, struct fuse_file_info *fi) {
+    printf("setattr called on ino=%lu\n", ino);
+
+    // 여기서 서버 통신은 생략하고, 요청 자체를 항상 성공했다고 응답
+    // 단, 커널에 돌려줄 stat 구조체는 최소한 채워줘야 함
+
+    struct stat st;
+    memset(&st, 0, sizeof(st));
+    st.st_ino = ino;
+    st.st_mode = 0100000 | 0644;  // 임시: 일반 파일
+    st.st_nlink = 1;
+    st.st_uid = getuid();
+    st.st_gid = getgid();
+    st.st_size = 0;
+    st.st_atime = time(NULL);
+    st.st_mtime = time(NULL);
+    st.st_ctime = time(NULL);
+
+    fuse_reply_attr(req, &st, 1.0);
 }
 
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
