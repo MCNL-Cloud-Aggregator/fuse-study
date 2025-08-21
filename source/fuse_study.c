@@ -187,43 +187,62 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
 }
 
 void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
-			 struct fuse_file_info *fi)
-{
-	(void) fi;
+                       struct fuse_file_info *fi) {
+    (void) fi;
     int opcode = 2;
-    struct pkt * pkt_data = calloc(1,sizeof(struct pkt)); 
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
-    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
-    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
-    size_t bufsize = 0;
-    char *buffer = malloc(size);
-    int flag = 1;
-    while (1)
-    {
-        bound_read(serv_sd,pkt_data);
-        //read(sock,&flag,sizeof(int));
-        if(flag == 0) break;
-        memset(pkt_data,0,sizeof(struct pkt));
-        bound_read(serv_sd,pkt_data);
-        //struct stat st;
-        struct pkt * st = calloc(1,sizeof(struct pkt)); 
-        //memset(&st,0,sizeof(st));
-        bound_read(serv_sd,st);
-        //read(sock,&st,sizeof(st));
-        if (fuse_add_direntry(req, buffer + bufsize, size - bufsize,
-                              pkt_data->buf, st, off + 1) > 0) {
-            bufsize += fuse_dirent_size(strlen(pkt_data->buf));
-        } else {
-            free(st);
-            break;
-        }
-         free(st);
+    struct pkt *pkt_data = calloc(1, sizeof(struct pkt));
+    if (pkt_data == NULL) {
+        fuse_reply_err(req, ENOMEM);
+        return;
     }
+    
+    bound_send(serv_sd, pkt_data, &opcode, sizeof(int));
+    bound_send(serv_sd, pkt_data, _path, strlen(_path) + 1);
+    
+    char *buffer = malloc(size);
+    if (!buffer) {
+        free(pkt_data);
+        fuse_reply_err(req, ENOMEM);
+        return;
+    }
+    
+    size_t bufsize = 0;
+    int current_offset = 0;
+    
+    while (1) {
+        int flag;
+        bound_read(serv_sd, pkt_data);
+        memcpy(&flag, pkt_data->buf, sizeof(int));  
+        
+        if (flag == 0) break;
+        
+        bound_read(serv_sd, pkt_data);
+        
+        struct pkt *st_pkt = calloc(1, sizeof(struct pkt));
+        bound_read(serv_sd, st_pkt);
+        
+        struct stat st;
+        memcpy(&st, st_pkt->buf, sizeof(struct stat));
+        
+        if (current_offset >= off) {  
+            size_t entry_size = fuse_add_direntry(req, buffer + bufsize, 
+                                                 size - bufsize,
+                                                 pkt_data->buf, &st, 
+                                                 current_offset + 1);
+            if (entry_size > size - bufsize) {
+                free(st_pkt);
+                break;  
+            }
+            bufsize += entry_size;
+        }
+        
+        current_offset++;
+        free(st_pkt);
+    }
+    
     free(pkt_data);
     fuse_reply_buf(req, buffer, bufsize);
     free(buffer);
-	
 }
 
 void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode)
