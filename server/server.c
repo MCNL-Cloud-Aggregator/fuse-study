@@ -49,7 +49,7 @@ void* thread_handler(void* arg) {
 					break;
 		case 0x01 : // fuse_study_getattr();
 		case 0x02 : fuse_study_readdir(client_sock,path);
-		case 0x03 : fuse_study_open(client_sock,path); break;
+		case 0x03 : /*fuse_study_open(client_sock,path);*/ break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
 		case 0x05 : fuse_study_create(path); break;// fuse_study_create();
 		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
@@ -86,6 +86,11 @@ int main() {
 	if (server_sock == -1) {
 		printf("[Error] socket()\n");
 		exit(-1);
+	}
+	int opt = 1;
+	if (setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+		perror("setsockopt");
+		exit(1);
 	}
 	
 	// server_sock 세팅
@@ -244,7 +249,7 @@ int fuse_study_readdir(int sock, char *path){
     return 0;
 }
 
-int fuse_study_open(int sock, char *path)
+/*int fuse_study_open(int sock, char *path)
 {
 	int res;
     struct fuse_file_info fi;
@@ -255,7 +260,7 @@ int fuse_study_open(int sock, char *path)
     }
     close(res);
     return 0;
-}
+}*/
 
 int fuse_study_mkdir(int sock, char *path)
 {
