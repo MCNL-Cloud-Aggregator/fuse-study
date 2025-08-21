@@ -296,7 +296,7 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
 
 void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode)
 {
-    int opcode = 6;
+    int opcode = MKDIR;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     if(pkt_data == NULL)
         error_handling("calloc() error");
