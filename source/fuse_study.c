@@ -200,7 +200,6 @@ void fuse_study_create(fuse_req_t req, fuse_ino_t parent, const char *path, mode
     // fi->fh 같은 경우 필요에 따라 파일 핸들 세팅
     fi->fh = e.ino;  // 예시
     fuse_reply_create(req, &e, fi);
-    return 0;
 }
 
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
