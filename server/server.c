@@ -54,11 +54,11 @@ void* thread_handler(void* arg) {
 					bound_send(client_sock, &send_buf, &flag, sizeof(int));
 					break;
 		case 0x01 : // fuse_study_getattr();
-		case 0x02 : fuse_study_readdir(client_sock,path);
+		case 0x02 : printf("ls %s start\n",path); fuse_study_readdir(client_sock,path); printf("end\n"); break;
 		case 0x03 : /*fuse_study_open(client_sock,path);*/ break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
 		case 0x05 : fuse_study_create(path); break;// fuse_study_create();
-		case 0x06 : printf("%s\n",path); fuse_study_mkdir(client_sock,path); printf("end\n"); break;
+		case 0x06 : fuse_study_mkdir(client_sock,path); break;
 		case 0x07 : printf("write start\n"); fuse_study_write(client_sock, path); printf("write terminated\n"); break;
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
 		case 0x09 : fuse_study_rmdir(client_sock,path); break;
@@ -232,14 +232,12 @@ int fuse_study_readdir(int sock, char *path){
         int error = -errno;
         flag = 0;
         bound_send(sock,pkt_data,&flag,sizeof(int));
-        //write(sock,&flag,sizeof(int));
         free(pkt_data);
 		return -errno;
     }
     
 	while ((de = readdir(dp)) != NULL) {
         bound_send(sock,pkt_data,&flag,sizeof(int));
-        //write(sock,&flag,sizeof(int));
         memset(pkt_data,0,sizeof(struct pkt));
         bound_send(sock,pkt_data,de->d_name,strlen(de->d_name)+1);
         struct stat st;
@@ -247,11 +245,9 @@ int fuse_study_readdir(int sock, char *path){
         st.st_ino = de->d_ino;
         st.st_mode = de->d_type << 12;
         bound_send(sock,pkt_data,&st,sizeof(st));
-        //write(sock,&st,sizeof(st));
 	}
     flag = 0;
     bound_send(sock,pkt_data,&flag,sizeof(int));
-    //write(sock,&flag,sizeof(int));
 	closedir(dp);
     free(pkt_data);
     return 0;

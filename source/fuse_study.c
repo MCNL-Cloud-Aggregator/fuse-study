@@ -297,24 +297,6 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     
     size_t bufsize = 0;
     off_t current_offset = 0;
-    
-    if (off == 0) {
-        struct stat dot_st = {0};
-        dot_st.st_ino = ino;
-        dot_st.st_mode = S_IFDIR | 0755;
-        
-        size_t dot_size = fuse_add_direntry(req, buffer + bufsize, size - bufsize, ".", &dot_st, 1);
-        if (dot_size <= size - bufsize) {
-            bufsize += dot_size;
-            current_offset++;
-        }
-        
-        size_t dotdot_size = fuse_add_direntry(req, buffer + bufsize, size - bufsize, "..", &dot_st, 2);
-        if (dotdot_size <= size - bufsize) {
-            bufsize += dotdot_size;
-            current_offset++;
-        }
-    }
 
     while (1) {
         int flag;
