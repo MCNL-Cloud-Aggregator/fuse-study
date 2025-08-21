@@ -13,6 +13,5 @@ struct pkt{
     char buf[BUF_SIZE];
 };
 
-void error_handling(const char*);
 int bound_read(const int sd, struct pkt* buf);
 int bound_send(const int sd, struct pkt* buf, void* data, size_t data_size);

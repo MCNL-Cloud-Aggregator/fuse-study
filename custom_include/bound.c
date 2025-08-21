@@ -1,11 +1,5 @@
 #include "bound.h"
 
-void error_handling(const char* err_msg){
-    fputs(err_msg, stderr);
-    fputc('\n', stderr );
-    exit(1);
-}
-
 int bound_read(const int sd, struct pkt* buf){
     int total_read = 0;
     int read_cnt = 0;

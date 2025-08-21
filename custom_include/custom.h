@@ -28,6 +28,7 @@ header 파일 분리
 #include <fcntl.h>
 #include <stddef.h>
 #include <assert.h>
+#include <stdlib.h>
 
 
 //opcode 매크로 등록
@@ -60,7 +61,7 @@ status
  * fuse_opt_parse would attempt to free() them when the user specifies
  * different values on the command line.
  */
-static struct options {
+/*static struct options {
 	const char *filename;
 	const char *contents;
 	int show_help;
@@ -75,8 +76,8 @@ static const struct fuse_opt option_spec[] = {
 	OPTION("-h", show_help),
 	OPTION("--help", show_help),
 	FUSE_OPT_END
-};
+};*/
 
-int fuse_study_unlink(const char *path);
+//int fuse_study_unlink(const char *path);
 int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi);
-int fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg);
+void *fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg);

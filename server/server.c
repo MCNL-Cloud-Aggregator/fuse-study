@@ -138,6 +138,7 @@ int main() {
 				
 				// client가 connection을 종료했을 경우
 				if (read_byte == 0) {
+					printf("cliend %d connection closed\n", epoll_events[i].data.fd);
 					close(client_sock);
 					epoll_ctl(epfd, EPOLL_CTL_DEL, client_sock, &event);
 					continue;
