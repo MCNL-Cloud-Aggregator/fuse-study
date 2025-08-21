@@ -21,7 +21,7 @@ header 파일 분리
 
 #define FUSE_USE_VERSION 31
 
-#include <fuse.h>
+#include <fuse_lowlevel.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
