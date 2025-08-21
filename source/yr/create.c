@@ -9,7 +9,6 @@ int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
     struct pkt send_buf;
     struct pkt recv_buf;
     status stat;
-    int serv_sd = 0; //전역변수 사용예정
 
     bound_send(serv_sd, &send_buf, CREATE, sizeof(unsigned short));
     bound_send(serv_sd, &send_buf, "/path", strlen("/path"));

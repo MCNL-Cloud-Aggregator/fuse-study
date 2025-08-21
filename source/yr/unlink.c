@@ -6,9 +6,10 @@ int fuse_study_unlink(const char *path){
     struct pkt send_buf;
     struct pkt recv_buf;
     status stat;
-    int serv_sd = 0; //전역변수 사용예정
+    //int serv_sd;
+    unsigned short opcode = UNLINK;
 
-    bound_send(serv_sd, &send_buf, UNLINK, sizeof(unsigned short));
+    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
     bound_send(serv_sd, &send_buf, "/path", strlen("/path"));
 
     do{
@@ -30,6 +31,8 @@ int fuse_study_unlink(const char *path){
     /*
     return status code를 받고, 해당 code에 따라서 상태 메시지 출력 or 출력 x
     */
+
+    return 0;
 }
 
 /*

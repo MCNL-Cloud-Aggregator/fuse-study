@@ -1,6 +1,6 @@
 #include "../../custom_include/custom.h"
 
-int fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg){
+void *fuse_study_init(struct fuse_conn_info *conn, struct fuse_config *cfg){
     (void) conn;
 	cfg->use_ino = 1;
     cfg->parallel_direct_writes = 1;
