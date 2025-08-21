@@ -122,6 +122,23 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
     fuse_reply_buf(req, data, read_byte);
 }
 
+void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+
+    unsigned short opcode = OPEN;
+    struct pkt send_buf;
+    char* data = (char*)malloc(sizeof(char) * (strlen(_path) + 1));
+    strcpy(data, _path);
+    data[strlen(_path)] = '\0';
+    
+    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
+    bound_send(serv_sd, &send_buf, data, strlen(data));
+
+    // 서버 응답 대신 일단 성공으로 처리
+    fuse_reply_open(req, fi);
+
+    // 서버에서 에러코드 주면 그대로 fuse_reply_err(req, errno) 하면 됨
+}
+
 //void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
 	
 //	struct pkt send_buf, read_buf;

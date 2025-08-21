@@ -42,6 +42,7 @@ header 파일 분리
 #define MKDIR	0x06
 #define READDIR 0x02
 #define RMDIR	0x09
+#define OPEN	0x03
 /*
 server_socket descriptor
 

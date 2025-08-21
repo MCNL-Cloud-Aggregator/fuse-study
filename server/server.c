@@ -49,7 +49,7 @@ void* thread_handler(void* arg) {
 					break;
 		case 0x01 : // fuse_study_getattr();
 		case 0x02 : fuse_study_readdir(client_sock,path);
-		case 0x03 : // fuse_study_open();
+		case 0x03 : fuse_study_open(client_sock,path); break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
 		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
