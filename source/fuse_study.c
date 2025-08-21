@@ -392,7 +392,13 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     }
     
     bound_send(serv_sd, pkt_data, &opcode, sizeof(int));
-    bound_send(serv_sd, pkt_data, _path, strlen(_path)+1);
+    char* path_to_send;
+    if (ino == FUSE_ROOT_ID) {
+            path_to_send = "/"; // 루트 아이노드일 경우, 경로를 "/"로 지정
+        } else {
+         path_to_send = _path; // 그 외에는 기존 방식 사용 (여전히 문제는 있음)
+    }
+    bound_send(serv_sd, pkt_data, path_to_send, strlen(path_to_send)+1);
     
     char *buffer = malloc(size);
     if (!buffer) {
