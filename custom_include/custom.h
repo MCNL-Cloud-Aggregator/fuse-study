@@ -39,6 +39,9 @@ header 파일 분리
 #define CREATE	0x05
 #define READ	0x04
 #define WRITE	0x07
+#define MKDIR	0x06
+#define READDIR 0x02
+#define RMDIR	0x09
 /*
 server_socket descriptor
 
