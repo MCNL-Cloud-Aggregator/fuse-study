@@ -248,15 +248,19 @@ int fuse_study_mkdir(int sock, char *path)
 {
 	int res;
     mode_t mode;
+	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
+	bound_send(sock,pkt_data,&res,sizeof(int));
 	return 0;
 }
 
 int fuse_study_rmdir(int sock, char *path)
 {
 	int res;
+	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
 	res = rmdir(path);
+	bound_send(sock,pkt_data,&res,sizeof(int));
 	return 0;
 }
 
