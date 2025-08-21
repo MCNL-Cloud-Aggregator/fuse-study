@@ -20,7 +20,7 @@ struct thread_arg {
 	int epfd;
 	struct epoll_event event;
 };
-
+//test
 void* thread_handler(void* arg) {
 	int client_sock = ((struct thread_arg*) arg)->client_sock;
 	unsigned short opcode = ((struct thread_arg*) arg)->opcode;
