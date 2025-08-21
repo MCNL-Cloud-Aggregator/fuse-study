@@ -13,6 +13,10 @@
 #define DEFAULT_PATH "/"
 #define PORT 9000
 
+/*
+gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 --cflags --libs` -o fs_cli
+*/
+
 struct thread_arg {
 	unsigned short opcode;
 	char* path;
