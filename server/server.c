@@ -252,6 +252,17 @@ int fuse_study_mkdir(int sock, char *path)
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
 	bound_send(sock,pkt_data,&res,sizeof(int));
+	if (res == 0) {
+        struct stat st;
+        if (stat(path, &st) == 0) {
+            struct pkt *stat_pkt = calloc(1, sizeof(struct pkt));
+            memcpy(stat_pkt->buf, &st, sizeof(struct stat));
+            stat_pkt->total_size = sizeof(struct stat);
+            bound_send(sock, stat_pkt, stat_pkt->buf, stat_pkt->total_size);
+            free(stat_pkt);
+        }
+    }
+	free(pkt_data);
 	return 0;
 }
 
