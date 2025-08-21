@@ -41,7 +41,7 @@ void* thread_handler(void* arg) {
 	char* path = ((struct thread_arg*) arg)->path;
 
 	struct pkt send_buf;
-	
+	printf("thread executed\n");
 	switch(opcode) {
 		case 0x00 : printf("lookup check1\n");
 					int flag = (access(path, F_OK) == 0);
@@ -70,6 +70,7 @@ void* thread_handler(void* arg) {
 	/*
 		goto를 사용하든 조건문을 통해서 그냥 return 하든 client가 연결을 끊었을 때는 그냥 return, 그렇지않으면 epoll list에 client socket을 추가하고 return
 	*/
+	printf("thread terminated\n");
 	return NULL;
 }
 
