@@ -207,8 +207,10 @@ int fuse_study_readdir(int sock){
     char real_path[BUF_SIZE];
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     int flag = 1;
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
+   if(pkt_data == NULL){
+		perror("calloc() error\n");
+		exit(1);
+	}
     bound_read(sock,pkt_data);
     snprintf(real_path,sizeof(real_path),".%s",pkt_data->buf);
     dp = opendir(real_path);
@@ -246,8 +248,10 @@ int fuse_study_mkdir(int sock)
 {
 	int res;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
+    if(pkt_data == NULL){
+		perror("calloc() error\n");
+		exit(1);
+	}
     bound_read(sock,pkt_data);
     mode_t mode;
     read(sock,&mode,sizeof(mode_t));
@@ -261,8 +265,10 @@ int fuse_study_rmdir(int sock)
 {
 	int res;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
-    if(pkt_data == NULL)
-        error_handling("calloc() error");
+    if(pkt_data == NULL){
+		perror("calloc() error\n");
+		exit(1);
+	}
     bound_read(sock,pkt_data);
 	res = rmdir(pkt_data->buf);
 	write(sock,&res,sizeof(int));
