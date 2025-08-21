@@ -391,11 +391,14 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     }
     
     bound_send(serv_sd, pkt_data, &opcode, sizeof(int));
-    char* path_to_send;
+    char *path_to_send = NULL;
+
     if (ino == FUSE_ROOT_ID) {
-            path_to_send = "./";
-        } else {
-         path_to_send = _path;
+        path_to_send = "./";
+    } else if (_path != NULL && strlen(_path) > 0) {
+        path_to_send = _path;
+    } else {
+        path_to_send = "./";
     }
     bound_send(serv_sd, pkt_data, path_to_send, strlen(path_to_send)+1);
     
