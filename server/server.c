@@ -17,6 +17,10 @@
 gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 --cflags --libs` -o fs_cli
 */
 
+int fuse_study_readdir();
+int fuse_study_rmdir();
+int fuse_study_mkdir();
+
 struct thread_arg {
 	unsigned short opcode;
 	char* path;
@@ -35,14 +39,14 @@ void* thread_handler(void* arg) {
 	switch(opcode) {
 		case 0x00 : break;
 		case 0x01 : // fuse_study_getattr();
-		case 0x02 : // fuse_study_readdir();
+		case 0x02 : fuse_study_readdir();
 		case 0x03 : // fuse_study_open();
 		case 0x04 : // fuse_study_read();
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
-		case 0x06 : // fuse_study_mkdir();
+		case 0x06 : fuse_study_mkdir();
 		case 0x07 : // fuse_study_write();
 		case 0x08 : printf("%s", path); break;// fuse_study_unlink();
-		case 0x09 : // fuse_study_rmdir();
+		case 0x09 : fuse_study_rmdir();
 		default : break;
 	}
 	
@@ -190,5 +194,75 @@ int main() {
 	close(server_sock);
 	free(epoll_events);
 	
+	return 0;
+}
+
+
+int fuse_study_readdir(){
+    DIR *dp;
+    struct dirent *de;
+    char real_path[BUF_SIZE];
+    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+    int flag = 1;
+    if(pkt_data == NULL)
+        error_handling("calloc() error");
+    bound_read(sock,pkt_data);
+    snprintf(real_path,sizeof(real_path),".%s",pkt_data->buf);
+    dp = opendir(real_path);
+
+	if (dp == NULL){
+        int error = -errno;
+        flag = 0;
+        bound_send(sock,pkt_data,&flag,sizeof(int));
+        //write(sock,&flag,sizeof(int));
+        free(pkt_data);
+		return -errno;
+    }
+    
+	while ((de = readdir(dp)) != NULL) {
+        bound_send(sock,pkt_data,&flag,sizeof(int));
+        //write(sock,&flag,sizeof(int));
+        memset(pkt_data,0,sizeof(struct pkt));
+        bound_send(sock,pkt_data,de->d_name,strlen(de->d_name)+1);
+        struct stat st;
+        memset(&st, 0, sizeof(st));
+        st.st_ino = de->d_ino;
+        st.st_mode = de->d_type << 12;
+        bound_send(sock,pkt_data,&st,sizeof(st));
+        //write(sock,&st,sizeof(st));
+	}
+    flag = 0;
+    bound_send(sock,pkt_data,&flag,sizeof(int));
+    //write(sock,&flag,sizeof(int));
+	closedir(dp);
+    free(pkt_data);
+    return 0;
+}
+
+int fuse_study_mkdir()
+{
+	int res;
+    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+    if(pkt_data == NULL)
+        error_handling("calloc() error");
+    bound_read(sock,pkt_data);
+    mode_t mode;
+    read(sock,&mode,sizeof(mode_t));
+	res = mkdir(pkt_data->buf, mode);
+    write(sock,&res,sizeof(int));
+    free(pkt_data);
+	return 0;
+}
+
+int fuse_study_rmdir()
+{
+	int res;
+    struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
+    if(pkt_data == NULL)
+        error_handling("calloc() error");
+    bound_read(sock,pkt_data);
+	res = rmdir(pkt_data->buf);
+	write(sock,&res,sizeof(int));
+    free(pkt_data);
 	return 0;
 }
