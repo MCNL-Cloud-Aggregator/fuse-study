@@ -17,9 +17,9 @@
 gcc -Wall fuse_study.c ./yr/init.c ../custom_include/bound.c `pkg-config fuse3 --cflags --libs` -o fs_cli
 */
 
-int fuse_study_readdir();
-int fuse_study_rmdir();
-int fuse_study_mkdir();
+int fuse_study_readdir(int sock);
+int fuse_study_rmdir(int sock);
+int fuse_study_mkdir(int sock);
 
 struct thread_arg {
 	unsigned short opcode;
@@ -39,14 +39,14 @@ void* thread_handler(void* arg) {
 	switch(opcode) {
 		case 0x00 : break;
 		case 0x01 : // fuse_study_getattr();
-		case 0x02 : fuse_study_readdir();
+		case 0x02 : fuse_study_readdir(client_sock);
 		case 0x03 : // fuse_study_open();
 		case 0x04 : // fuse_study_read();
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
-		case 0x06 : fuse_study_mkdir();
+		case 0x06 : fuse_study_mkdir(client_sock);
 		case 0x07 : // fuse_study_write();
 		case 0x08 : printf("%s", path); break;// fuse_study_unlink();
-		case 0x09 : fuse_study_rmdir();
+		case 0x09 : fuse_study_rmdir(client_sock);
 		default : break;
 	}
 	
@@ -198,7 +198,7 @@ int main() {
 }
 
 
-int fuse_study_readdir(){
+int fuse_study_readdir(int sock){
     DIR *dp;
     struct dirent *de;
     char real_path[BUF_SIZE];
@@ -239,7 +239,7 @@ int fuse_study_readdir(){
     return 0;
 }
 
-int fuse_study_mkdir()
+int fuse_study_mkdir(int sock)
 {
 	int res;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
@@ -254,7 +254,7 @@ int fuse_study_mkdir()
 	return 0;
 }
 
-int fuse_study_rmdir()
+int fuse_study_rmdir(int sock)
 {
 	int res;
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));

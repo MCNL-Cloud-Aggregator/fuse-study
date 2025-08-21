@@ -194,26 +194,35 @@ void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt)); 
     if(pkt_data == NULL)
         error_handling("calloc() error");
-    bound_send(sock,pkt_data,&opcode,sizeof(int));
-    bound_send(sock,pkt_data,path,strlen(path)+1);
+    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+    size_t bufsize = 0;
+    char *buffer = malloc(size);
     int flag = 1;
     while (1)
     {
-        bound_read(sock,pkt_data);
+        bound_read(serv_sd,pkt_data);
         //read(sock,&flag,sizeof(int));
         if(flag == 0) break;
         memset(pkt_data,0,sizeof(struct pkt));
-        bound_read(sock,pkt_data);
+        bound_read(serv_sd,pkt_data);
         //struct stat st;
         struct pkt * st = calloc(1,sizeof(struct pkt)); 
         //memset(&st,0,sizeof(st));
-        bound_read(sock,st);
+        bound_read(serv_sd,st);
         //read(sock,&st,sizeof(st));
-        if(filler(buf,pkt_data->buf,st->buf,0))
-            error_handling("filler() error");
+        if (fuse_add_direntry(req, buffer + bufsize, size - bufsize,
+                              pkt_data->buf, st, off + 1) > 0) {
+            bufsize += fuse_dirent_size(strlen(pkt_data->buf));
+        } else {
+            free(st);
+            break;
+        }
          free(st);
     }
     free(pkt_data);
+    fuse_reply_buf(req, buffer, bufsize);
+    free(buffer);
 	
 }
 
@@ -223,11 +232,11 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
     struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     if(pkt_data == NULL)
         error_handling("calloc() error");
-    bound_send(sock,pkt_data,&opcode,sizeof(int));
-    bound_send(sock,pkt_data,path,strlen(path)+1);
-	write(sock,&mode,sizeof(mode_t));
+    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
+	write(serv_sd,&mode,sizeof(mode_t));
     int res;
-    read(sock,&res,sizeof(int));
+    read(serv_sd,&res,sizeof(int));
     if (res == -1)
 		return -errno;
     free(pkt_data);
@@ -239,10 +248,10 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
 	struct pkt * pkt_data = calloc(1,sizeof(struct pkt));
     if(pkt_data == NULL)
         error_handling("calloc() error");
-    bound_send(sock,pkt_data,&opcode,sizeof(int));
-    bound_send(sock,pkt_data,path,strlen(path)+1);
+    bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
+    bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
     int res;
-    read(sock,&res,sizeof(int));
+    read(serv_sd,&res,sizeof(int));
     if (res == -1)
 		return -errno;
     free(pkt_data);
