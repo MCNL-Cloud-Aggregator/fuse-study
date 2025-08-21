@@ -303,10 +303,6 @@ void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
     bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
 	write(serv_sd,&mode,sizeof(mode_t));
-    int res;
-    read(serv_sd,&res,sizeof(int));
-    if (res == -1)
-		error_handling("read() error");
     free(pkt_data);
 }
 
@@ -318,9 +314,5 @@ void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name)
         error_handling("calloc() error");
     bound_send(serv_sd,pkt_data,&opcode,sizeof(int));
     bound_send(serv_sd,pkt_data,_path,strlen(_path)+1);
-    int res;
-    read(serv_sd,&res,sizeof(int));
-    if (res == -1)
-		error_handling("read() error");
     free(pkt_data);
 }

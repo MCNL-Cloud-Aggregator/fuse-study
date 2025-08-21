@@ -248,7 +248,6 @@ int fuse_study_mkdir(int sock, char *path)
     mode_t mode;
     read(sock,&mode,sizeof(mode_t));
 	res = mkdir(path, mode);
-    write(sock,&res,sizeof(int));
 	return 0;
 }
 
@@ -256,6 +255,5 @@ int fuse_study_rmdir(int sock, char *path)
 {
 	int res;
 	res = rmdir(path);
-	write(sock,&res,sizeof(int));
 	return 0;
 }
