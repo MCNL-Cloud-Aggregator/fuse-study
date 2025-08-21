@@ -9,6 +9,7 @@
 struct pkt{
     int end;
     size_t size;
+    size_t total_size;
     char buf[BUF_SIZE];
 };
 

@@ -36,6 +36,7 @@ int bound_send(const int sd, struct pkt* buf, void* data, size_t data_size){
         
         buf->size = send_size;
         buf->end = (remain_len <= BUF_SIZE);
+	buf->total_size = data_size;
 
         write_cnt = write(sd, buf, sizeof(struct pkt));
         if(write_cnt == -1){
