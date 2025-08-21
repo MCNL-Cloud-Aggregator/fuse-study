@@ -1,6 +1,6 @@
 #include "bound.h"
 
-int bound_read(const int sd, struct pkt* buf){
+/*int bound_read(const int sd, struct pkt* buf){
     int total_read = 0;
     int read_cnt = 0;
     int read_sz = (int)sizeof(struct pkt);
@@ -12,6 +12,25 @@ int bound_read(const int sd, struct pkt* buf){
             return read_cnt;
         }
         
+        total_read += read_cnt;
+        read_sz -= read_cnt;
+    }
+
+    return buf->size;
+}*/
+
+int bound_read(const int sd, struct pkt* buf){
+    int total_read = 0;
+    int read_cnt = 0;
+    int read_sz = sizeof(struct pkt);
+    char* ptr = (char*)buf;  // **struct* -> char*로 캐스팅**
+
+    while(read_sz > 0){
+        read_cnt = read(sd, ptr + total_read, read_sz); // 이제 바이트 단위
+        if(read_cnt <= 0){
+            return read_cnt;
+        }
+
         total_read += read_cnt;
         read_sz -= read_cnt;
     }
