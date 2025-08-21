@@ -17,6 +17,7 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *name);
 void fuse_study_readdir(fuse_req_t req, fuse_ino_t ino, size_t size, off_t off,struct fuse_file_info *fi);
 void fuse_study_mkdir(fuse_req_t req, fuse_ino_t parent, const char *name, mode_t mode);
 void fuse_study_rmdir(fuse_req_t req, fuse_ino_t parent, const char *name);
+void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi);
 
 static const struct fuse_lowlevel_ops fs_oper = {
 	//.init           = fuse_study_init,
@@ -97,7 +98,7 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 	
 	struct pkt send_buf, read_buf;
 	unsigned short opcode = READ;
-	char* data;
+	char* data = NULL;
 	
 	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
 	bound_send(serv_sd, &send_buf, _path, strlen(_path)+1);
@@ -108,7 +109,7 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 		if (data == NULL) {
 			data = malloc(read_buf.total_size);
 		}
-		memset(&data[read_byte], read_buf.buf, read_buf.size);
+		memcpy(&data[read_byte], read_buf.buf, read_buf.size);
 		
 		read_byte += read_buf.size;
 		if (read_buf.end == 1) {
@@ -116,21 +117,23 @@ void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, st
 		}
 	} while(true);
     
+    printf("data : %s\n", data);
+    
     fuse_reply_buf(req, data, read_byte);
 }
 
-void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
+//void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t size, off_t off, struct fuse_file_info *fi) {
 	
-	struct pkt send_buf, read_buf;
-	unsigned short opcode = READ;
-	char* data;
+//	struct pkt send_buf, read_buf;
+//	unsigned short opcode = READ;
+//	char* data;
 	
-	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
-	bound_send(serv_sd, &send_buf, _path, strlen(_path));
+//	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
+//	bound_send(serv_sd, &send_buf, _path, strlen(_path));
 	
-	bound_send(serv_sd, &send_buf, buf, strlen(buf));
+//	bound_send(serv_sd, &send_buf, buf, strlen(buf));
 	
-}
+//}
 
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {
     printf("unlink executed: parent=%lu, name=%s\n", parent, path);
@@ -184,17 +187,6 @@ int fuse_study_create(const char *path, mode_t mode, struct fuse_file_info *fi){
     return status code를 받고, 해당 code에 따라서 상태 메시지 출력 or 출력 x
     */
    return 0;
-}
-
-void fuse_study_read (fuse_req_t req, fuse_ino_t ino, size_t size, off_t off, struct fuse_file_info *fi) {
-	
-	struct pkt send_buf;
-	unsigned short opcode = READ;
-	
-	bound_send(serv_sd, &send_buf, &opcode, sizeof(opcode));
-	bound_send(serv_sd, &send_buf, _path, strlen(_path));
-	
-	
 }
 
 void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
