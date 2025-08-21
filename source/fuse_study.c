@@ -6,6 +6,8 @@
 #include <linux/stat.h>
 #include <sys/stat.h>
 #include <stdbool.h>
+#include <time.h>          
+#include <fuse_lowlevel.h>
 #define SERV_PORT 9000
 #define SERV_IP "203.252.99.216"
 
@@ -35,6 +37,7 @@ static const struct fuse_lowlevel_ops fs_oper = {
     .read = fuse_study_read,
     .write = fuse_study_write,
     .open = fuse_study_open,
+    .getattr = fuse_study_getattr
 };
 
 int serv_sd;
@@ -144,21 +147,118 @@ void fuse_study_write (fuse_req_t req, fuse_ino_t ino, const char *buf, size_t s
 	
 }
 
-void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi) {
+void fuse_study_open(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
+{
+    (void)ino;
 
-    unsigned short opcode = OPEN;
-    struct pkt send_buf;
-    char* data = (char*)malloc(sizeof(char) * (strlen(_path) + 1));
-    strcpy(data, _path);
-    data[strlen(_path)] = '\0';
-    
-    bound_send(serv_sd, &send_buf, &opcode, sizeof(unsigned short));
-    bound_send(serv_sd, &send_buf, data, strlen(data));
+    if (_path == NULL) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
 
-    // 서버 응답 대신 일단 성공으로 처리
+    // 1) opcode + path(NUL 포함) + flags 전송
+    unsigned short opcode =
+    #ifdef OPEN
+        OPEN;          // 프로젝트에서 OPEN이 0x03으로 정의되어 있으면 사용
+    #else
+        0x03;          // 서버 스위치와 동일
+    #endif
+
+    struct pkt send_pkt, recv_pkt;
+    int flags = fi ? fi->flags : O_RDONLY;
+
+    bound_send(serv_sd, &send_pkt, &opcode, sizeof(opcode));
+    bound_send(serv_sd, &send_pkt, _path, strlen(_path) + 1);  // ⬅ NUL 포함
+    bound_send(serv_sd, &send_pkt, &flags, sizeof(flags));
+
+    // 2) 서버 결과 수신 (0이면 OK, 음수면 -errno)
+    if (bound_read(serv_sd, &recv_pkt) <= 0) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+    int result = 0;
+    memcpy(&result, recv_pkt.buf, sizeof(int));
+    if (result != 0) {
+        fuse_reply_err(req, -result);  // -(-errno) → errno
+        return;
+    }
+
+    // 3) 캐시/직접 I/O 정책 (현재 구현은 path 기반 I/O라 direct_io 켜도 무방)
+    // fi->direct_io = 1;    // 페이지 캐시 사용 안 함 (원하면 주석 해제)
+    // fi->keep_cache = 0;
+
+    // 4) 성공 응답
     fuse_reply_open(req, fi);
+}
 
-    // 서버에서 에러코드 주면 그대로 fuse_reply_err(req, errno) 하면 됨
+void fuse_study_getattr(fuse_req_t req, fuse_ino_t ino, struct fuse_file_info *fi)
+{
+    (void)fi;
+
+    // 1) 루트 디렉토리 직접 응답 (서버 왕복 불필요)
+    if (ino == FUSE_ROOT_ID) {
+        struct stat st;
+        memset(&st, 0, sizeof(st));
+        st.st_ino   = FUSE_ROOT_ID;
+        st.st_mode  = S_IFDIR | 0755;
+        st.st_nlink = 2;
+        st.st_uid   = getuid();
+        st.st_gid   = getgid();
+        st.st_atime = time(NULL);
+        st.st_mtime = st.st_atime;
+        st.st_ctime = st.st_atime;
+        fuse_reply_attr(req, &st, 1.0 /* attr cache sec */);
+        return;
+    }
+
+    // 2) 서버에 GETATTR 질의
+    struct pkt send_pkt, recv_pkt;
+    unsigned short opcode =
+    #ifdef GETATTR
+        GETATTR;      // 프로젝트에 GETATTR가 정의돼 있다면 이걸 사용
+    #else
+        0x01;         // 위 서버 스위치와 동일하게 0x01 사용
+    #endif
+
+    // 현재 코드 구조상 _path에 lookup 이름만 들어가 있음
+    // (권장: 전역 대신 각 요청마다 풀경로 구성)
+    if (_path == NULL) {
+        fuse_reply_err(req, ENOENT);
+        return;
+    }
+
+    // 문자열은 널 포함해서 보내는게 안전
+    bound_send(serv_sd, &send_pkt, &opcode, sizeof(opcode));
+    bound_send(serv_sd, &send_pkt, _path, strlen(_path) + 1);
+
+    // 2-1) 먼저 결과코드(int) 수신 (0이면 OK, 음수면 -errno)
+    if (bound_read(serv_sd, &recv_pkt) <= 0) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+    int result = 0;
+    memcpy(&result, recv_pkt.buf, sizeof(int));
+    if (result != 0) {
+        // 서버가 -errno 보냄 → 양수 errno로 바꿔서 반환
+        fuse_reply_err(req, -result);
+        return;
+    }
+
+    // 2-2) OK면 stat 구조체 수신
+    if (bound_read(serv_sd, &recv_pkt) <= 0) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+    struct stat st;
+    if (recv_pkt.size < sizeof(struct stat)) {
+        fuse_reply_err(req, EIO);
+        return;
+    }
+    memcpy(&st, recv_pkt.buf, sizeof(struct stat));
+
+    // 커널에 속성 전달
+    // 캐시 타임아웃은 필요에 맞게 조정(여기선 1초)
+    fuse_reply_attr(req, &st, 1.0);
 }
 
 void fuse_study_unlink(fuse_req_t req, fuse_ino_t parent, const char *path) {

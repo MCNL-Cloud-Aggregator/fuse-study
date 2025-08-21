@@ -28,7 +28,7 @@ int fuse_study_create(char *path);
 int fuse_study_read(int client_sock, char* path);
 int fuse_study_write(int client_sock, char* path);
 int fuse_study_open(int sock, char *path);
-
+int fuse_study_getattr(int sock, char *path);
 
 struct thread_arg {
 	unsigned short opcode;
@@ -57,7 +57,7 @@ void* thread_handler(void* arg) {
 		case 0x00 : int flag = (access(path, F_OK) == 0);
 					bound_send(client_sock, &send_buf, &flag, sizeof(int));
 					break;
-		case 0x01 : // fuse_study_getattr();
+		case 0x01 : fuse_study_getattr(client_sock, path); break;
 		case 0x02 : printf("ls %s start\n",path); fuse_study_readdir(client_sock,path); printf("end\n"); break;
 		case 0x03 : fuse_study_open(client_sock,path); break;
 		case 0x04 : printf("read start\n"); fuse_study_read(client_sock, path); printf("read terminated\n"); break;
@@ -259,14 +259,63 @@ int fuse_study_readdir(int sock, char *path){
 
 int fuse_study_open(int sock, char *path)
 {
-	int res;
-    struct fuse_file_info fi;
-    res = open(path, O_RDONLY);
-    if (res < 0) {
-        perror("open");
-        return -1;
+    struct pkt pkt;
+    int flags = 0;
+
+    // 1) 클라이언트가 보낸 flags 수신
+    ssize_t n = read(sock, &flags, sizeof(flags));
+    if (n != sizeof(flags)) {
+        int err = -EIO;
+        bound_send(sock, &pkt, &err, sizeof(err));
+        return 0;
     }
-    close(res);
+
+    // 2) 안전한 플래그 정제 (create는 create 핸들러에서 하므로 제거)
+    int oflags = flags & ~(O_CREAT | O_EXCL);
+
+    // 3) 실제 open 시도
+    int fd = open(path, oflags);
+    int result;
+    if (fd < 0) {
+        result = -errno;          // 음수 errno로 반환
+    } else {
+        result = 0;
+        close(fd);                // 이 설계에선 fd 유지 불필요(READ/WRITE가 path 기반)
+    }
+
+    // 4) 결과 전송
+    bound_send(sock, &pkt, &result, sizeof(result));
+    return 0;
+}
+
+int fuse_study_getattr(int sock, char *path)
+{
+    struct stat st;
+    int res;
+    struct pkt *pkt = calloc(1, sizeof(struct pkt));
+    if (!pkt) return -1;
+
+    // 실제 파일 속성 조회
+    res = lstat(path, &st);
+    if (res == -1) {
+        int err = -errno;                            // 음수 errno 전송
+        bound_send(sock, pkt, &err, sizeof(int));
+        free(pkt);
+        return 0;
+    }
+
+    // 에러 0 먼저 보냄
+    int ok = 0;
+    bound_send(sock, pkt, &ok, sizeof(int));
+
+    // stat 구조체 전송
+    struct pkt *st_pkt = calloc(1, sizeof(struct pkt));
+    memcpy(st_pkt->buf, &st, sizeof(struct stat));
+    st_pkt->total_size = sizeof(struct stat);
+    bound_send(sock, st_pkt, st_pkt->buf, st_pkt->total_size);
+
+    free(st_pkt);
+    free(pkt);
     return 0;
 }
 

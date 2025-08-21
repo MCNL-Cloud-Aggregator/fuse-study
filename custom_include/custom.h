@@ -1,4 +1,4 @@
-/*
+ /*
 init		= hello_init,			    0
 .getattr	= hello_getattr,	종현	1
 .readdir	= hello_readdir,	강현	2
