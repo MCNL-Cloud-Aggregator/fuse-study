@@ -52,13 +52,8 @@ void* thread_handler(void* arg) {
 		case 0x05 : printf("%s", path); break;// fuse_study_create();
 		case 0x06 : printf("askdjfhakjshdfjkhaskjdhfjk\n"); fuse_study_mkdir(client_sock,path); printf("askdjfhakjshdfjkhaskjdhfjk\n"); break;
 		case 0x07 : // fuse_study_write();
-<<<<<<< Updated upstream
 		case 0x08 : unlink(path); break;// fuse_study_unlink();
-		case 0x09 : fuse_study_rmdir(client_sock); break;
-=======
-		case 0x08 : printf("%s", path); fflush(stdout); break;// fuse_study_unlink();
 		case 0x09 : fuse_study_rmdir(client_sock,path); break;
->>>>>>> Stashed changes
 		default : break;
 	}
 	
