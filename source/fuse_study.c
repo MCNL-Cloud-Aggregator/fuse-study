@@ -223,7 +223,7 @@ void fuse_study_lookup(fuse_req_t req, fuse_ino_t parent, const char *path) {
     memset(&e, 0, sizeof(e));
 
 
-    if(flag != -1){
+    if(flag == 1){
             // 예시: 그냥 inode=1인 더미 regular file 응답
         e.ino = 100;  // FUSE_ROOT_ID(1)와 겹치지 않는 값
         e.attr.st_mode = 0100000 | 0644;
